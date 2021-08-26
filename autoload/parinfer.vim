@@ -35,6 +35,5 @@ function! parinfer#init() abort
     augroup parinfer
         autocmd! BufEnter <buffer> call v:lua.parinfer.enter_buffer()
         autocmd! CursorMoved,InsertCharPre,InsertEnter,TextChanged,TextChangedI,TextChangedP <buffer> call v:lua.parinfer.process_buffer()
-        autocmd! WinEnter <buffer> call v:lua.parinfer.enter_window()
     augroup END
 endfunction
