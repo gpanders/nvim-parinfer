@@ -1,11 +1,11 @@
 " ISC License
-
+"
 " Copyright (c) 2021 Jason Felice
-
+"
 " Permission to use, copy, modify, and/or distribute this software for any
 " purpose with or without fee is hereby granted, provided that the above
 " copyright notice and this permission notice appear in all copies.
-
+"
 " THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
 " REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
 " AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
@@ -28,20 +28,8 @@ endif
 if !exists('g:parinfer_force_balance')
   let g:parinfer_force_balance = v:false
 endif
-if !exists('g:parinfer_comment_char')
-  let g:parinfer_comment_char = ';'
-endif
-if !exists('g:parinfer_lisp_vline_symbols')
-  let g:parinfer_lisp_vline_symbols = v:false
-endif
-if !exists('g:parinfer_lisp_block_comments')
-  let g:parinfer_lisp_block_comments = v:false
-endif
-if !exists('g:parinfer_scheme_sexp_comments')
-  let g:parinfer_scheme_sexp_comments = v:false
-endif
-if !exists('g:parinfer_janet_long_strings')
-  let g:parinfer_janet_long_strings = v:false
+if !exists('g:parinfer_comment_chars')
+  let g:parinfer_comment_chars = [';']
 endif
 
 command! ParinferOn let g:parinfer_enabled = v:true
@@ -69,5 +57,4 @@ augroup parinfer
 
     " Long strings settings
     autocmd BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
-
 augroup END
