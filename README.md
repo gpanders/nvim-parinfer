@@ -7,6 +7,7 @@ nvim-parinfer is a Neovim plugin that uses [Chris Oakman's][oakmac]
 [oakmac]: https://github.com/oakmac
 [parinfer]: https://shaunlebron.github.io/parinfer/
 [parinfer-rust]: https://github.com/eraserhd/parinfer-rust
+[parinfer-lua]: https://github.com/oakmac/parinfer-lua
 
 ## Description
 
