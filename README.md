@@ -1,5 +1,7 @@
 # nvim-parinfer
 
+**This plugin is in beta status and is not yet working as intended.**
+
 nvim-parinfer is a Neovim plugin that uses [Chris Oakman's][oakmac]
 [parinfer-lua][] to implement the [parinfer][] algorithm. Unlike
 [parinfer-rust][], it requires no external dependencies: simply install and go.
