@@ -25,10 +25,6 @@ implemented in `lua/parinfer.lua`.
 
 `lua/parinfer.lua` is licensed ISC by [Chris Oakman][oakmac].
 
-`plugin/parinfer.vim` is heavily based on [Jason Felice's][eraserhd]
-implementation in [parinfer-rust][] and is therefore also licensed ISC.
-
 Everything else is licensed [GPLv3][] or later by Gregory Anders.
 
-[eraserhd]: https://github.com/eraserhd
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
