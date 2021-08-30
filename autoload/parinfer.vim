@@ -16,13 +16,13 @@
 " along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 function! parinfer#log(...) abort
-  if a:0 > 0
-    let g:parinfer_logfile = a:1
-    echomsg 'Parinfer is now logging to '.a:1
-  else
-    unlet g:parinfer_logfile
-    echomsg 'Parinfer is no longer logging'
-  endif
+    if a:0 > 0
+        let g:parinfer_logfile = a:1
+        echomsg 'Parinfer is now logging to '.a:1
+    else
+        unlet g:parinfer_logfile
+        echomsg 'Parinfer is no longer logging'
+    endif
 endfunction
 
 function! parinfer#init() abort

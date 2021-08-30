@@ -22,12 +22,15 @@ let g:loaded_parinfer = v:true
 if !exists('g:parinfer_mode')
   let g:parinfer_mode = 'smart'
 endif
+
 if !exists('g:parinfer_enabled')
   let g:parinfer_enabled = v:true
 endif
+
 if !exists('g:parinfer_force_balance')
   let g:parinfer_force_balance = v:false
 endif
+
 if !exists('g:parinfer_comment_chars')
   let g:parinfer_comment_chars = [';']
 endif
@@ -39,22 +42,6 @@ command! -nargs=? ParinferLog call parinfer#log(<f-args>)
 
 augroup parinfer
     autocmd!
+    autocmd FileType janet let b:parinfer_comment_chars = ['#']
     autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck call parinfer#init()
-
-    " Common Lisp and Scheme: ignore parens in symbols enclosed by ||
-    autocmd BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_vline_symbols = 1
-    autocmd BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_vline_symbols = 1
-
-    " Common Lisp and Scheme: ignore parens in block comments
-    autocmd BufNewFile,BufRead *.lsp,*.lisp,*.cl,*.L,sbclrc,.sbclrc let b:parinfer_lisp_block_comments = 1
-    autocmd BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_lisp_block_comments = 1
-
-    " Scheme (SRFI-62): S-expression comment
-    autocmd BufNewFile,BufRead *.scm,*.sld,*.ss,*.rkt let b:parinfer_scheme_sexp_comments = 1
-
-    " Comment settings
-    autocmd BufNewFile,BufRead *.janet let b:parinfer_comment_char = '#'
-
-    " Long strings settings
-    autocmd BufNewFile,BufRead *.janet let b:parinfer_janet_long_strings = 1
 augroup END
