@@ -28,23 +28,29 @@
       (with-open [f (io.open vim.g.parinfer_logfile :a)]
         (f:write diff)))))
 
+(fn get-option [opt]
+  (let [opt (.. "parinfer_" opt)]
+    (match (. vim.b opt)
+      v v
+      nil (. vim.g opt))))
+
 (fn invoke-parinfer [text lnum col]
   (let [[prev-lnum prev-col] vim.w.parinfer_prev_cursor
-         request {:commentChars vim.b.parinfer_comment_chars
+         request {:commentChars (get-option :comment_chars)
                   :prevCursorLine prev-lnum
                   :prevCursorX (+ prev-col 1)
                   :cursorLine lnum
                   :cursorX (+ col 1)
-                  :forceBalance vim.g.parinfer_force_balance}]
+                  :forceBalance (get-option :force_balance)}]
     (log "request" request)
-    ((. (require :parinfer) (.. vim.g.parinfer_mode :Mode)) text request)))
+    ((. (require :parinfer) (.. (get-option :mode) :Mode)) text request)))
 
 (fn update-buffer [bufnr lines]
   (vim.api.nvim_command "undojoin")
   (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
 (fn process-buffer []
-  (when (and vim.g.parinfer_enabled (not vim.o.paste) vim.o.modifiable)
+  (when (and (get-option :enabled) (not vim.o.paste) vim.o.modifiable)
     (when (not= vim.b.changedtick vim.b.parinfer_changedtick)
       (set vim.b.parinfer_changedtick vim.b.changedtick)
       (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
@@ -67,8 +73,6 @@
     (set vim.w.parinfer_prev_cursor (vim.api.nvim_win_get_cursor 0))))
 
 (fn enter-buffer []
-  (when (not vim.b.parinfer_comment_chars)
-    (set vim.b.parinfer_comment_chars vim.g.parinfer_comment_chars))
   (set vim.w.parinfer_prev_cursor (vim.api.nvim_win_get_cursor 0))
   (set vim.b.parinfer_last_changedtick -1)
   (let [mode vim.g.parinfer_mode]
