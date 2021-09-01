@@ -36,4 +36,9 @@ function! parinfer#init() abort
         autocmd! BufEnter <buffer> call v:lua.parinfer.enter_buffer()
         autocmd! CursorMoved,InsertCharPre,InsertEnter,TextChanged,TextChangedI,TextChangedP <buffer> call v:lua.parinfer.process_buffer()
     augroup END
+
+    if !get(g:, 'parinfer_no_maps', 0)
+        imap <buffer> <Tab> <Plug>(parinfer-tab)
+        imap <buffer> <S-Tab> <Plug>(parinfer-backtab)
+    endif
 endfunction
