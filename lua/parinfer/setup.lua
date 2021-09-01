@@ -41,6 +41,10 @@ local function invoke_parinfer(text, lnum, col)
   log("request", request)
   return (require("parinfer"))[(vim.g.parinfer_mode .. "Mode")](text, request)
 end
+local function update_buffer(bufnr, lines)
+  vim.api.nvim_command("undojoin")
+  return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+end
 local function process_buffer()
   if (vim.g.parinfer_enabled and not vim.o.paste and vim.o.modifiable) then
     if (vim.b.changedtick ~= vim.b.parinfer_changedtick) then
@@ -61,7 +65,7 @@ local function process_buffer()
           local col0 = (response.cursorX - 1)
           vim.api.nvim_win_set_cursor(0, {lnum0, col0})
           local function _9_()
-            return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+            return update_buffer(bufnr, lines)
           end
           vim.schedule(_9_)
         end

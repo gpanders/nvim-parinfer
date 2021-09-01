@@ -39,6 +39,10 @@
     (log "request" request)
     ((. (require :parinfer) (.. vim.g.parinfer_mode :Mode)) text request)))
 
+(fn update-buffer [bufnr lines]
+  (vim.api.nvim_command "undojoin")
+  (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
+
 (fn process-buffer []
   (when (and vim.g.parinfer_enabled (not vim.o.paste) vim.o.modifiable)
     (when (not= vim.b.changedtick vim.b.parinfer_changedtick)
@@ -56,7 +60,7 @@
                     lnum response.cursorLine
                     col (- response.cursorX 1)]
                 (vim.api.nvim_win_set_cursor 0 [lnum col])
-                (vim.schedule #(vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))))
+                (vim.schedule #(update-buffer bufnr lines))))
             (do
               (log "error-response" response)
               (set vim.g.parinfer_last_error response.error)))))
