@@ -46,3 +46,6 @@ augroup parinfer
     autocmd FileType janet let b:parinfer_comment_chars = ['#']
     autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck call parinfer#init()
 augroup END
+
+inoremap <Plug>(parinfer-tab) <Cmd>lua parinfer.tab(true)<CR>
+inoremap <Plug>(parinfer-backtab) <Cmd>lua parinfer.tab(false)<CR>

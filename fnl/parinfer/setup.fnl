@@ -34,6 +34,47 @@
       v v
       nil (. vim.g opt))))
 
+(fn expand-tab-stops [tabstops]
+  (when (and tabstops (> (length tabstops) 0))
+    (let [xs []]
+      (each [_ stop (ipairs tabstops)]
+        (table.insert xs (- stop.x 1))
+        (table.insert xs (if (= stop.ch "(") (+ stop.x 1) stop.x))
+        (when stop.argX
+          (table.insert xs (- stop.argX 1))))
+     xs)))
+
+(fn next-stop [stops col forward]
+  (when (and stops (> (length stops) 0))
+    (var left nil)
+    (var right nil)
+    (each [_ stop (ipairs stops) :until right]
+      (when (< col stop)
+        (set right stop))
+      (when (> col stop)
+        (set left stop)))
+    (if forward
+        right
+        left)))
+
+(fn tab [forward]
+  (let [stops (expand-tab-stops vim.b.parinfer_tabstops)
+        [lnum col] (vim.api.nvim_win_get_cursor 0)
+        line (. (vim.api.nvim_buf_get_lines 0 (- lnum 1) lnum true) 1)
+        indent (match (line:match "^%s+")
+                 s (length s)
+                 nil 0)]
+    (var next-x nil)
+    (when (= col indent)
+      (set next-x (next-stop stops col forward)))
+    (when (not next-x)
+      (set next-x (math.max 0 (+ col (if forward 2 -2)))))
+    (let [shift (- next-x col)]
+      (if (> shift 0)
+          (vim.api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) 0 [(string.rep " " shift)])
+          (vim.api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) (* -1 shift) [""])))
+    (vim.api.nvim_win_set_cursor 0 [lnum next-x])))
+
 (fn invoke-parinfer [text lnum col]
   (let [[prev-lnum prev-col] vim.w.parinfer_prev_cursor
          request {:commentChars (get-option :comment_chars)
@@ -59,14 +100,16 @@
             text (table.concat orig-lines "\n")
             response (invoke-parinfer text lnum col)]
         (if response.success
-            (when (not= response.text text)
-              (log "change-response" response)
-              (log-diff text response.text)
-              (let [lines (vim.split response.text "\n")
-                    lnum response.cursorLine
-                    col (- response.cursorX 1)]
-                (vim.api.nvim_win_set_cursor 0 [lnum col])
-                (vim.schedule #(update-buffer bufnr lines))))
+            (do
+              (set vim.b.parinfer_tabstops response.tabStops)
+              (when (not= response.text text)
+                (log "change-response" response)
+                (log-diff text response.text)
+                (let [lines (vim.split response.text "\n")
+                      lnum response.cursorLine
+                      col (- response.cursorX 1)]
+                  (vim.api.nvim_win_set_cursor 0 [lnum col])
+                  (vim.schedule #(update-buffer bufnr lines)))))
             (do
               (log "error-response" response)
               (set vim.g.parinfer_last_error response.error)))))
@@ -81,6 +124,7 @@
     (set vim.g.parinfer_mode mode)))
 
 (global parinfer {:enter_buffer enter-buffer
-                  :process_buffer process-buffer})
+                  :process_buffer process-buffer
+                  : tab})
 
 (enter-buffer)
