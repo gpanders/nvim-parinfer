@@ -35,31 +35,33 @@ local function log_diff(from, to)
 end
 local function get_option(opt)
   local opt0 = ("parinfer_" .. opt)
-  if (vim.b[opt0] ~= nil) then
-    return vim.b[opt0]
-  else
+  local _7_ = vim.b[opt0]
+  if (nil ~= _7_) then
+    local v = _7_
+    return v
+  elseif (_7_ == nil) then
     return vim.g[opt0]
   end
 end
 local function invoke_parinfer(text, lnum, col)
-  local _let_8_ = vim.w.parinfer_prev_cursor
-  local prev_lnum = _let_8_[1]
-  local prev_col = _let_8_[2]
+  local _let_9_ = vim.w.parinfer_prev_cursor
+  local prev_lnum = _let_9_[1]
+  local prev_col = _let_9_[2]
   local request = {commentChars = get_option("comment_chars"), cursorLine = lnum, cursorX = (col + 1), forceBalance = get_option("force_balance"), prevCursorLine = prev_lnum, prevCursorX = (prev_col + 1)}
   log("request", request)
   return (require("parinfer"))[(get_option("mode") .. "Mode")](text, request)
 end
 local function update_buffer(bufnr, lines)
-  vim.api.nvim_command("undojoin")
+  vim.api.nvim_command("silent! undojoin")
   return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
 end
 local function process_buffer()
   if (get_option("enabled") and not vim.o.paste and vim.o.modifiable) then
     if (vim.b.changedtick ~= vim.b.parinfer_changedtick) then
       vim.b.parinfer_changedtick = vim.b.changedtick
-      local _let_9_ = vim.api.nvim_win_get_cursor(0)
-      local lnum = _let_9_[1]
-      local col = _let_9_[2]
+      local _let_10_ = vim.api.nvim_win_get_cursor(0)
+      local lnum = _let_10_[1]
+      local col = _let_10_[2]
       local bufnr = vim.api.nvim_get_current_buf()
       local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       local text = table.concat(orig_lines, "\n")
@@ -72,10 +74,10 @@ local function process_buffer()
           local lnum0 = response.cursorLine
           local col0 = (response.cursorX - 1)
           vim.api.nvim_win_set_cursor(0, {lnum0, col0})
-          local function _10_()
+          local function _11_()
             return update_buffer(bufnr, lines)
           end
-          vim.schedule(_10_)
+          vim.schedule(_11_)
         end
       else
         log("error-response", response)

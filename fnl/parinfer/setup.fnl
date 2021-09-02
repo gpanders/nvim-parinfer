@@ -46,7 +46,7 @@
     ((. (require :parinfer) (.. (get-option :mode) :Mode)) text request)))
 
 (fn update-buffer [bufnr lines]
-  (vim.api.nvim_command "undojoin")
+  (vim.api.nvim_command "silent! undojoin")
   (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
 (fn process-buffer []
