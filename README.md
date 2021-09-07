@@ -15,37 +15,40 @@ nvim-parinfer supports the following options:
 
 `g:parinfer_mode`
 
-**Default: `smart`**
+*Default:* `smart`
 
 What mode to use with the parinfer algorithm. See the [parinfer][] website for
 more details. The recommended (and default) value is `smart`.
 
 `g:parinfer_enabled`
 
-**Default: `true`**
+*Default:* `true`
 
 When `false`, parinfer will not run. You can control this variable with the
 `:ParinferOn`, `:ParinferOff`, and `:ParinferToggle` commands.
 
 `g:parinfer_force_balance`
 
-**Default: `false`**
+*Default:* `false`
 
 When `true`, indent mode will aggressively enforce paran balance.
 
 `g:parinfer_comment_chars`
 
-**Default: `[';']`**
+*Default:* `[';']`
 
 List of characters that represent comments.
 
 All of the options above can be set on a buffer-local basis as well (just use
 `b:` instead of `g:`).
 
+## Mappings
+
 nvim-parinfer defines two mappings: `<Plug>(parinfer-tab)` and
 `<Plug>(parinfer-backtab)`. These will move your cursor to special "tab stops"
 as identified by parinfer. They will be mapped automatically to `<Tab>` and
-`<S-Tab>` in Lisp buffers unless `g:parinfer_no_maps` is set to `1`.
+`<S-Tab>` in Lisp buffers if no prior mappings exist, unless
+`g:parinfer_no_maps` is set to `1`.
 
 ## Architecture
 

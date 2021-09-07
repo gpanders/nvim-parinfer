@@ -38,7 +38,12 @@ function! parinfer#init() abort
     augroup END
 
     if !get(g:, 'parinfer_no_maps', 0)
-        imap <buffer> <Tab> <Plug>(parinfer-tab)
-        imap <buffer> <S-Tab> <Plug>(parinfer-backtab)
+        if mapcheck('<Tab>', 'i') ==# ''
+            imap <buffer> <Tab> <Plug>(parinfer-tab)
+        endif
+
+        if mapcheck('<S-Tab>', 'i') ==# ''
+            imap <buffer> <S-Tab> <Plug>(parinfer-backtab)
+        endif
     endif
 endfunction
