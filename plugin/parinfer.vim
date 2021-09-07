@@ -44,7 +44,7 @@ command! -nargs=? ParinferLog call parinfer#log(<f-args>)
 augroup parinfer
     autocmd!
     autocmd FileType janet let b:parinfer_comment_chars = ['#']
-    autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck call parinfer#init()
+    autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck,query call parinfer#init()
 augroup END
 
 inoremap <Plug>(parinfer-tab) <Cmd>lua parinfer.tab(true)<CR>
