@@ -137,7 +137,7 @@ local function update_buffer(bufnr, lines)
   return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
 end
 local function process_buffer()
-  if (get_option("enabled") and not vim.o.paste and vim.o.modifiable) then
+  if (get_option("enabled") and not vim.o.paste and not vim.o.readonly and vim.o.modifiable) then
     if (vim.b.changedtick ~= vim.b.parinfer_changedtick) then
       vim.b.parinfer_changedtick = vim.b.changedtick
       local _let_25_ = vim.api.nvim_win_get_cursor(0)

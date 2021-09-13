@@ -91,7 +91,7 @@
   (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
 (fn process-buffer []
-  (when (and (get-option :enabled) (not vim.o.paste) vim.o.modifiable)
+  (when (and (get-option :enabled) (not vim.o.paste) (not vim.o.readonly) vim.o.modifiable)
     (when (not= vim.b.changedtick vim.b.parinfer_changedtick)
       (set vim.b.parinfer_changedtick vim.b.changedtick)
       (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
