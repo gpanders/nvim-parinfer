@@ -42,7 +42,7 @@
         (table.insert xs (if (= stop.ch "(") (+ stop.x 1) stop.x))
         (when stop.argX
           (table.insert xs (- stop.argX 1))))
-     xs)))
+      xs)))
 
 (fn next-stop [stops col forward]
   (when (and stops (> (length stops) 0))
@@ -90,9 +90,14 @@
   (vim.api.nvim_command "silent! undojoin")
   (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
+(fn is-undo-head? []
+  (let [{: seq_cur : entries} (vim.fn.undotree)
+        [newhead] (icollect [_ v (ipairs entries)] (if (= v.newhead 1) v))]
+    (or (not newhead) (= newhead.seq seq_cur))))
+
 (fn process-buffer []
   (when (and (get-option :enabled) (not vim.o.paste) (not vim.o.readonly) vim.o.modifiable)
-    (when (not= vim.b.changedtick vim.b.parinfer_changedtick)
+    (when (and (is-undo-head?) (not= vim.b.changedtick vim.b.parinfer_changedtick))
       (set vim.b.parinfer_changedtick vim.b.changedtick)
       (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
             bufnr (vim.api.nvim_get_current_buf)

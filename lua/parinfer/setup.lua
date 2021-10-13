@@ -136,13 +136,34 @@ local function update_buffer(bufnr, lines)
   vim.api.nvim_command("silent! undojoin")
   return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
 end
+local function is_undo_head_3f()
+  local _let_25_ = vim.fn.undotree()
+  local entries = _let_25_["entries"]
+  local seq_cur = _let_25_["seq_cur"]
+  local function _27_()
+    local tbl_12_auto = {}
+    for _, v in ipairs(entries) do
+      local _28_
+      if (v.newhead == 1) then
+        _28_ = v
+      else
+      _28_ = nil
+      end
+      tbl_12_auto[(#tbl_12_auto + 1)] = _28_
+    end
+    return tbl_12_auto
+  end
+  local _let_26_ = _27_()
+  local newhead = _let_26_[1]
+  return (not newhead or (newhead.seq == seq_cur))
+end
 local function process_buffer()
   if (get_option("enabled") and not vim.o.paste and not vim.o.readonly and vim.o.modifiable) then
-    if (vim.b.changedtick ~= vim.b.parinfer_changedtick) then
+    if (is_undo_head_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick)) then
       vim.b.parinfer_changedtick = vim.b.changedtick
-      local _let_25_ = vim.api.nvim_win_get_cursor(0)
-      local lnum = _let_25_[1]
-      local col = _let_25_[2]
+      local _let_30_ = vim.api.nvim_win_get_cursor(0)
+      local lnum = _let_30_[1]
+      local col = _let_30_[2]
       local bufnr = vim.api.nvim_get_current_buf()
       local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       local text = table.concat(orig_lines, "\n")
@@ -156,10 +177,10 @@ local function process_buffer()
           local lnum0 = response.cursorLine
           local col0 = (response.cursorX - 1)
           vim.api.nvim_win_set_cursor(0, {lnum0, col0})
-          local function _26_()
+          local function _31_()
             return update_buffer(bufnr, lines)
           end
-          vim.schedule(_26_)
+          vim.schedule(_31_)
         end
       else
         log("error-response", response)
