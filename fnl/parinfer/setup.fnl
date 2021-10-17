@@ -76,10 +76,10 @@
     (vim.api.nvim_win_set_cursor 0 [lnum next-x])))
 
 (fn invoke-parinfer [text lnum col]
-  (let [[prev-lnum prev-col] vim.w.parinfer_prev_cursor
+  (let [[prev-lnum prev-col] (or vim.b.parinfer_prev_cursor [])
          request {:commentChars (get-option :comment_chars)
                   :prevCursorLine prev-lnum
-                  :prevCursorX (+ prev-col 1)
+                  :prevCursorX (if prev-col (+ prev-col 1))
                   :cursorLine lnum
                   :cursorX (+ col 1)
                   :forceBalance (get-option :force_balance)}]
@@ -105,23 +105,21 @@
             text (table.concat orig-lines "\n")
             response (invoke-parinfer text lnum col)]
         (if response.success
-            (do
+            (let [lnum response.cursorLine
+                  col (- response.cursorX 1)]
               (set vim.b.parinfer_tabstops response.tabStops)
+              (set vim.b.parinfer_prev_cursor [lnum col])
               (when (not= response.text text)
                 (log "change-response" response)
                 (log-diff text response.text)
-                (let [lines (vim.split response.text "\n")
-                      lnum response.cursorLine
-                      col (- response.cursorX 1)]
+                (let [lines (vim.split response.text "\n")]
                   (vim.api.nvim_win_set_cursor 0 [lnum col])
                   (vim.schedule #(update-buffer bufnr lines)))))
             (do
               (log "error-response" response)
-              (set vim.g.parinfer_last_error response.error)))))
-    (set vim.w.parinfer_prev_cursor (vim.api.nvim_win_get_cursor 0))))
+              (set vim.g.parinfer_last_error response.error)))))))
 
 (fn enter-buffer []
-  (set vim.w.parinfer_prev_cursor (vim.api.nvim_win_get_cursor 0))
   (set vim.b.parinfer_last_changedtick -1)
   (let [mode vim.g.parinfer_mode]
     (set vim.g.parinfer_mode :paren)
@@ -131,5 +129,3 @@
 (global parinfer {:enter_buffer enter-buffer
                   :process_buffer process-buffer
                   : tab})
-
-(enter-buffer)

@@ -30,10 +30,9 @@ function! parinfer#init() abort
         return
     endif
 
-    lua require('parinfer.setup')
+    lua parinfer.enter_buffer()
 
     augroup parinfer
-        autocmd! BufEnter <buffer> call v:lua.parinfer.enter_buffer()
         autocmd! CursorMoved,InsertCharPre,InsertEnter,TextChanged,TextChangedI,TextChangedP <buffer> call v:lua.parinfer.process_buffer()
     augroup END
 
@@ -47,3 +46,5 @@ function! parinfer#init() abort
         endif
     endif
 endfunction
+
+lua require('parinfer.setup')
