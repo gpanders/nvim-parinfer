@@ -164,37 +164,38 @@ local function is_undo_head_3f()
   local newhead = _let_28_[1]
   return (not newhead or (newhead.seq == seq_cur))
 end
+local function should_run_3f()
+  return (get_option("enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.bo.buftype ~= "prompt") and is_undo_head_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick))
+end
 local function process_buffer()
-  if (get_option("enabled") and not vim.o.paste and not vim.o.readonly and vim.o.modifiable) then
-    if (is_undo_head_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick)) then
-      vim.b.parinfer_changedtick = vim.b.changedtick
-      local _let_32_ = vim.api.nvim_win_get_cursor(0)
-      local lnum = _let_32_[1]
-      local col = _let_32_[2]
-      local bufnr = vim.api.nvim_get_current_buf()
-      local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
-      local text = table.concat(orig_lines, "\n")
-      local response = invoke_parinfer(text, lnum, col)
-      if response.success then
-        local lnum0 = response.cursorLine
-        local col0 = (response.cursorX - 1)
-        vim.b.parinfer_tabstops = response.tabStops
-        vim.b.parinfer_prev_cursor = {lnum0, col0}
-        if (response.text ~= text) then
-          log("change-response", response)
-          log_diff(text, response.text)
-          local lines = vim.split(response.text, "\n")
-          vim.api.nvim_win_set_cursor(0, {lnum0, col0})
-          local function _33_()
-            return update_buffer(bufnr, lines)
-          end
-          return vim.schedule(_33_)
+  if should_run_3f() then
+    vim.b.parinfer_changedtick = vim.b.changedtick
+    local _let_32_ = vim.api.nvim_win_get_cursor(0)
+    local lnum = _let_32_[1]
+    local col = _let_32_[2]
+    local bufnr = vim.api.nvim_get_current_buf()
+    local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+    local text = table.concat(orig_lines, "\n")
+    local response = invoke_parinfer(text, lnum, col)
+    if response.success then
+      local lnum0 = response.cursorLine
+      local col0 = (response.cursorX - 1)
+      vim.b.parinfer_tabstops = response.tabStops
+      vim.b.parinfer_prev_cursor = {lnum0, col0}
+      if (response.text ~= text) then
+        log("change-response", response)
+        log_diff(text, response.text)
+        local lines = vim.split(response.text, "\n")
+        vim.api.nvim_win_set_cursor(0, {lnum0, col0})
+        local function _33_()
+          return update_buffer(bufnr, lines)
         end
-      else
-        log("error-response", response)
-        vim.g.parinfer_last_error = response.error
-        return nil
+        return vim.schedule(_33_)
       end
+    else
+      log("error-response", response)
+      vim.g.parinfer_last_error = response.error
+      return nil
     end
   end
 end

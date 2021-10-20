@@ -95,29 +95,37 @@
         [newhead] (icollect [_ v (ipairs entries)] (if (= v.newhead 1) v))]
     (or (not newhead) (= newhead.seq seq_cur))))
 
+(fn should-run? []
+  (and (get-option :enabled)
+       (not vim.o.paste)
+       (not vim.bo.readonly)
+       vim.bo.modifiable
+       (not= vim.bo.buftype :prompt)
+       (is-undo-head?)
+       (not= vim.b.changedtick vim.b.parinfer_changedtick)))
+
 (fn process-buffer []
-  (when (and (get-option :enabled) (not vim.o.paste) (not vim.o.readonly) vim.o.modifiable)
-    (when (and (is-undo-head?) (not= vim.b.changedtick vim.b.parinfer_changedtick))
-      (set vim.b.parinfer_changedtick vim.b.changedtick)
-      (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
-            bufnr (vim.api.nvim_get_current_buf)
-            orig-lines (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
-            text (table.concat orig-lines "\n")
-            response (invoke-parinfer text lnum col)]
-        (if response.success
-            (let [lnum response.cursorLine
-                  col (- response.cursorX 1)]
-              (set vim.b.parinfer_tabstops response.tabStops)
-              (set vim.b.parinfer_prev_cursor [lnum col])
-              (when (not= response.text text)
-                (log "change-response" response)
-                (log-diff text response.text)
-                (let [lines (vim.split response.text "\n")]
-                  (vim.api.nvim_win_set_cursor 0 [lnum col])
-                  (vim.schedule #(update-buffer bufnr lines)))))
-            (do
-              (log "error-response" response)
-              (set vim.g.parinfer_last_error response.error)))))))
+  (when (should-run?)
+    (set vim.b.parinfer_changedtick vim.b.changedtick)
+    (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
+          bufnr (vim.api.nvim_get_current_buf)
+          orig-lines (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
+          text (table.concat orig-lines "\n")
+          response (invoke-parinfer text lnum col)]
+      (if response.success
+          (let [lnum response.cursorLine
+                col (- response.cursorX 1)]
+            (set vim.b.parinfer_tabstops response.tabStops)
+            (set vim.b.parinfer_prev_cursor [lnum col])
+            (when (not= response.text text)
+              (log "change-response" response)
+              (log-diff text response.text)
+              (let [lines (vim.split response.text "\n")]
+                (vim.api.nvim_win_set_cursor 0 [lnum col])
+                (vim.schedule #(update-buffer bufnr lines)))))
+          (do
+            (log "error-response" response)
+            (set vim.g.parinfer_last_error response.error))))))
 
 (fn enter-buffer []
   (set vim.b.parinfer_last_changedtick -1)
