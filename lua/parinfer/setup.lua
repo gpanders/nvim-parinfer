@@ -1,3 +1,4 @@
+local parinfer_2a = require("parinfer")
 local function log(tag, data)
   if vim.g.parinfer_logfile then
     local f = io.open(vim.g.parinfer_logfile, "a")
@@ -137,42 +138,27 @@ local function invoke_parinfer(text, lnum, col)
   end
   request = {commentChars = get_option("comment_chars"), cursorLine = lnum, cursorX = (col + 1), forceBalance = get_option("force_balance"), prevCursorLine = prev_lnum, prevCursorX = _25_}
   log("request", request)
-  return (require("parinfer"))[(get_option("mode") .. "Mode")](text, request)
+  return (parinfer_2a)[(get_option("mode") .. "Mode")](text, request)
 end
 local function update_buffer(bufnr, lines)
   vim.api.nvim_command("silent! undojoin")
   return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
 end
-local function is_undo_head_3f()
+local function is_undo_leaf_3f()
   local _let_27_ = vim.fn.undotree()
-  local entries = _let_27_["entries"]
   local seq_cur = _let_27_["seq_cur"]
-  local function _29_()
-    local tbl_12_auto = {}
-    for _, v in ipairs(entries) do
-      local _30_
-      if (v.newhead == 1) then
-        _30_ = v
-      else
-      _30_ = nil
-      end
-      tbl_12_auto[(#tbl_12_auto + 1)] = _30_
-    end
-    return tbl_12_auto
-  end
-  local _let_28_ = _29_()
-  local newhead = _let_28_[1]
-  return (not newhead or (newhead.seq == seq_cur))
+  local seq_last = _let_27_["seq_last"]
+  return (seq_cur == seq_last)
 end
 local function should_run_3f()
-  return (get_option("enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.bo.buftype ~= "prompt") and is_undo_head_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick))
+  return (get_option("enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.bo.buftype ~= "prompt") and is_undo_leaf_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick))
 end
 local function process_buffer()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
-    local _let_32_ = vim.api.nvim_win_get_cursor(0)
-    local lnum = _let_32_[1]
-    local col = _let_32_[2]
+    local _let_28_ = vim.api.nvim_win_get_cursor(0)
+    local lnum = _let_28_[1]
+    local col = _let_28_[2]
     local bufnr = vim.api.nvim_get_current_buf()
     local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
@@ -187,10 +173,10 @@ local function process_buffer()
         log_diff(text, response.text)
         local lines = vim.split(response.text, "\n")
         vim.api.nvim_win_set_cursor(0, {lnum0, col0})
-        local function _33_()
+        local function _29_()
           return update_buffer(bufnr, lines)
         end
-        return vim.schedule(_33_)
+        return vim.schedule(_29_)
       end
     else
       log("error-response", response)

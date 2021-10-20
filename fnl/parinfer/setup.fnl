@@ -15,6 +15,8 @@
 ; You should have received a copy of the GNU General Public License
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+(local parinfer* (require :parinfer))
+
 (fn log [tag data]
   "Log a message to the log file."
   (when vim.g.parinfer_logfile
@@ -84,16 +86,15 @@
                   :cursorX (+ col 1)
                   :forceBalance (get-option :force_balance)}]
     (log "request" request)
-    ((. (require :parinfer) (.. (get-option :mode) :Mode)) text request)))
+    ((. parinfer* (.. (get-option :mode) :Mode)) text request)))
 
 (fn update-buffer [bufnr lines]
   (vim.api.nvim_command "silent! undojoin")
   (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
-(fn is-undo-head? []
-  (let [{: seq_cur : entries} (vim.fn.undotree)
-        [newhead] (icollect [_ v (ipairs entries)] (if (= v.newhead 1) v))]
-    (or (not newhead) (= newhead.seq seq_cur))))
+(fn is-undo-leaf? []
+  (let [{: seq_cur : seq_last} (vim.fn.undotree)]
+    (= seq_cur seq_last)))
 
 (fn should-run? []
   (and (get-option :enabled)
@@ -101,7 +102,7 @@
        (not vim.bo.readonly)
        vim.bo.modifiable
        (not= vim.bo.buftype :prompt)
-       (is-undo-head?)
+       (is-undo-leaf?)
        (not= vim.b.changedtick vim.b.parinfer_changedtick)))
 
 (fn process-buffer []
