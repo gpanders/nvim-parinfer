@@ -18,11 +18,10 @@
 ; Use a table lookup to translate between mode names and functions
 ; This saves us from having to do a string concatenation on every invocation of
 ; parinfer, which can be wasteful
-(local modes ((fn []
-                (let [parinfer (require :parinfer)]
-                  {:indent parinfer.indentMode
-                   :paren parinfer.parenMode
-                   :smart parinfer.smartMode}))))
+(local modes (let [parinfer (require :parinfer)]
+               {:indent parinfer.indentMode
+                :paren parinfer.parenMode
+                :smart parinfer.smartMode}))
 
 (fn log [tag data]
   "Log a message to the log file."
