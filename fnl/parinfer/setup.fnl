@@ -15,7 +15,14 @@
 ; You should have received a copy of the GNU General Public License
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(local parinfer* (require :parinfer))
+; Use a table lookup to translate between mode names and functions
+; This saves us from having to do a string concatenation on every invocation of
+; parinfer, which can be wasteful
+(local modes ((fn []
+                (let [parinfer (require :parinfer)]
+                  {:indent parinfer.indentMode
+                   :paren parinfer.parenMode
+                   :smart parinfer.smartMode}))))
 
 (fn log [tag data]
   "Log a message to the log file."
@@ -30,11 +37,13 @@
       (with-open [f (io.open vim.g.parinfer_logfile :a)]
         (f:write diff)))))
 
-(fn get-option [opt]
-  (let [opt (.. "parinfer_" opt)]
-    (match (. vim.b opt)
-      v v
-      nil (. vim.g opt))))
+(fn get-option* [opt]
+  (match (. vim.b opt)
+    v v
+    nil (. vim.g opt)))
+
+(macro get-option [opt]
+  `(get-option* ,(.. "parinfer_" opt)))
 
 (fn expand-tab-stops [tabstops]
   (when (and tabstops (> (length tabstops) 0))
@@ -86,7 +95,7 @@
                   :cursorX (+ col 1)
                   :forceBalance (get-option :force_balance)}]
     (log "request" request)
-    ((. parinfer* (.. (get-option :mode) :Mode)) text request)))
+    ((. modes (get-option :mode)) text request)))
 
 (fn update-buffer [bufnr lines]
   (vim.api.nvim_command "silent! undojoin")
