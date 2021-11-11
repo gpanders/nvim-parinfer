@@ -156,7 +156,9 @@ end
 local function should_run_3f()
   return (get_option_2a("parinfer_enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.bo.buftype ~= "prompt") and is_undo_leaf_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick))
 end
+local elapsed_times = {}
 local function process_buffer()
+  local start = vim.loop.hrtime()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
     local _let_28_ = vim.api.nvim_win_get_cursor(0)
@@ -179,14 +181,14 @@ local function process_buffer()
         local function _29_()
           return update_buffer(bufnr, lines)
         end
-        return vim.schedule(_29_)
+        vim.schedule(_29_)
       end
     else
       log("error-response", response)
       vim.g.parinfer_last_error = response.error
-      return nil
     end
   end
+  return table.insert(elapsed_times, (vim.loop.hrtime() - start))
 end
 local function enter_buffer()
   vim.b.parinfer_last_changedtick = -1
@@ -196,5 +198,28 @@ local function enter_buffer()
   vim.g.parinfer_mode = mode
   return nil
 end
-parinfer = {enter_buffer = enter_buffer, process_buffer = process_buffer, tab = tab}
-return nil
+local function stats()
+  local n = #elapsed_times
+  if (n > 0) then
+    local min = math.huge
+    local max = 0
+    local sum = 0
+    local sumsq = 0
+    for _, v in ipairs(elapsed_times) do
+      if (v < min) then
+        min = v
+      end
+      if (v > max) then
+        max = v
+      end
+      sum = (sum + v)
+      sumsq = (sumsq + (v * v))
+    end
+    local avg = (sum / n)
+    local sqsum = (sum * sum)
+    local std = math.sqrt(((sumsq - (sqsum / n)) / (n - 1)))
+    return print(("N: %d    Min: %0.6fms    Max: %0.6fms    Avg: %0.6fms    Std: %0.6fms"):format(n, (min / 1000000), (max / 1000000), (avg / 1000000), (std / 1000000)))
+  end
+end
+parinfer = {enter_buffer = enter_buffer, process_buffer = process_buffer, stats = stats, tab = tab}
+return vim.api.nvim_command("command! ParinferStats lua parinfer.stats()")

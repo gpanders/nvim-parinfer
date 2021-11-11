@@ -113,7 +113,10 @@
        (is-undo-leaf?)
        (not= vim.b.changedtick vim.b.parinfer_changedtick)))
 
+(local elapsed-times [])
+
 (fn process-buffer []
+  (local start (vim.loop.hrtime))
   (when (should-run?)
     (set vim.b.parinfer_changedtick vim.b.changedtick)
     (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
@@ -134,7 +137,8 @@
                 (vim.schedule #(update-buffer bufnr lines)))))
           (do
             (log "error-response" response)
-            (set vim.g.parinfer_last_error response.error))))))
+            (set vim.g.parinfer_last_error response.error)))))
+  (table.insert elapsed-times (- (vim.loop.hrtime) start)))
 
 (fn enter-buffer []
   (set vim.b.parinfer_last_changedtick -1)
@@ -143,6 +147,31 @@
     (process-buffer)
     (set vim.g.parinfer_mode mode)))
 
+(fn stats []
+  (local n (length elapsed-times))
+  (when (> n 0)
+    (var min math.huge)
+    (var max 0)
+    (var sum 0)
+    (var sumsq 0)
+    (each [_ v (ipairs elapsed-times)]
+      (when (< v min)
+        (set min v))
+      (when (> v max)
+        (set max v))
+      (set sum (+ sum v))
+      (set sumsq (+ sumsq (* v v))))
+    (local avg (/ sum n))
+    (local sqsum (* sum sum))
+    (local std (math.sqrt (/ (- sumsq (/ sqsum n)) (- n 1))))
+    (print (: "N: %d    Min: %0.6fms    Max: %0.6fms    Avg: %0.6fms    Std: %0.6fms"
+              :format
+              n
+              (/ min 1000000) (/ max 1000000) (/ avg 1000000) (/ std 1000000)))))
+
 (global parinfer {:enter_buffer enter-buffer
                   :process_buffer process-buffer
+                  : stats
                   : tab})
+
+(vim.api.nvim_command "command! ParinferStats lua parinfer.stats()")
