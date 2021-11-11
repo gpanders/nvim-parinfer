@@ -1,0 +1,76 @@
+*parinfer.txt*  Parinfer plugin for Neovim
+
+Author:  Gregory Anders <greg@gpanders.com>
+Repo:    https://github.com/gpanders/nvim-parinfer
+License: See LICENSE
+
+INTRODUCTION						    *parinfer*
+
+nvim-parinfer brings the parinfer algorithm for Lisp-like languages to Neovim.
+This plugin uses a pure Lua implementation of parinfer written by Chris
+Oakman.
+
+Parinfer mode is started immediately when a buffer is opened on a file with a
+Lisp-like language. The contents of the buffer are evaluated by parinfer
+whenever the cursor is moved or when the content of the buffer changes. See
+below for user commands and configuration options.
+
+							   *:ParinferOn*
+:ParinferOn 		Enable parinfer in the current buffer.
+
+							   *:ParinferOff*
+:ParinferOff 		Disable parinfer in the current buffer.
+
+							   *:ParinferToggle*
+:ParinferToggle 	Toggle parinfer in the current buffer.
+
+							   *:ParinferLog*
+:ParinferLog {file} 	Log parinfer output to {file}.
+
+							  *:ParinferStats*
+:ParinferStats	 	Show runtime statistics on parinfer invocation. Shows
+			the minimum and maximum runtimes as well as the
+			average and standard deviation. Use this to see the
+			runtime cost of using parinfer.
+
+==============================================================================
+OPTIONS						   *parinfer-options*
+
+All of the configuration options below can be used globally (|g:|) or
+per-buffer (|b:|).
+
+					   *g:parinfer_mode* *b:parinfer_mode*
+What mode to run parinfer in. One of "smart", "indent", or "paren". See the
+parinfer website for more information. The recommended (and default) value is
+"smart".
+
+				     *g:parinfer_enabled* *b:parinfer_enabled*
+When |FALSE|, parinfer will not run. You can control this variable with the
+|:ParinferOn|, |:ParinferOff|, and |:ParinferToggle| commands.
+
+			 *g:parinfer_force_balance* *b:parinfer_force_balance*
+When |TRUE|, indent mode will aggressively enforce paran balance. Defaults to
+|v:false|.
+
+			 *g:parinfer_comment_chars* *b:parinfer_comment_chars*
+List of characters that represent comments. Defaults to `[';']`.
+
+				*g:parinfer_no_maps* *b:parinfer_no_maps*
+Set to |TRUE| to disable automatic maps |parinfer-maps|.
+
+==============================================================================
+MAPS					   	*parinfer-maps*
+
+parinfer will automatically remap <Tab> and <S-Tab> in insert mode unless
+|g:parinfer_no_maps| is set (they can also be disabled per-filetype by setting
+|b:parinfer_no_maps|).
+
+						*parinfer_i_<Tab>*
+<Plug>(parinfer-tab)
+i_<Tab>		Navigate forward to the next tab stop.
+
+						*parinfer_i_<S-Tab>*
+<Plug>(parinfer-backtab)
+i_<S-Tab>	Navigate backward to the previous tab stop.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
