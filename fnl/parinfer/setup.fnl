@@ -27,14 +27,7 @@
   "Log a message to the log file."
   (when vim.g.parinfer_logfile
     (with-open [f (io.open vim.g.parinfer_logfile :a)]
-      (f:write (: "%20s: %s" :format tag (vim.fn.json_encode data))))))
-
-(fn log-diff [from to]
-  "Log the diff between 'from' and 'to' the log file (requires Nvim 0.6.0 or later)."
-  (when (and vim.g.parinfer_logfile (vim.fn.has "nvim-0.6.0"))
-    (let [diff (vim.diff from to)]
-      (with-open [f (io.open vim.g.parinfer_logfile :a)]
-        (f:write diff)))))
+      (f:write (: "%s: %s\n" :format tag (vim.fn.json_encode data))))))
 
 (fn get-option* [opt]
   (match (. vim.b opt)
@@ -131,7 +124,6 @@
             (set vim.b.parinfer_prev_cursor [lnum col])
             (when (not= response.text text)
               (log "change-response" response)
-              (log-diff text response.text)
               (let [lines (vim.split response.text "\n")]
                 (vim.api.nvim_win_set_cursor 0 [lnum col])
                 (vim.schedule #(update-buffer bufnr lines)))))
