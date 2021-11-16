@@ -20,7 +20,7 @@ function! parinfer#log(...) abort
         let g:parinfer_logfile = a:1
         echomsg 'Parinfer is now logging to '.a:1
     else
-        unlet g:parinfer_logfile
+        unlet! g:parinfer_logfile
         echomsg 'Parinfer is no longer logging'
     endif
 endfunction
