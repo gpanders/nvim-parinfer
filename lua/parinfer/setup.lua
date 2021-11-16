@@ -143,10 +143,11 @@ local function process_buffer()
   local start = vim.loop.hrtime()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
-    local _let_25_ = vim.api.nvim_win_get_cursor(0)
+    local winnr = vim.api.nvim_get_current_win()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local _let_25_ = vim.api.nvim_win_get_cursor(winnr)
     local lnum = _let_25_[1]
     local col = _let_25_[2]
-    local bufnr = vim.api.nvim_get_current_buf()
     local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
     local response = invoke_parinfer(text, lnum, col)
@@ -158,9 +159,9 @@ local function process_buffer()
       if (response.text ~= text) then
         log("change-response", response)
         local lines = vim.split(response.text, "\n")
-        vim.api.nvim_win_set_cursor(0, {lnum0, col0})
         local function _26_()
-          return update_buffer(bufnr, lines)
+          update_buffer(bufnr, lines)
+          return vim.api.nvim_win_set_cursor(winnr, {lnum0, col0})
         end
         vim.schedule(_26_)
       end

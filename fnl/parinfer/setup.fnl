@@ -112,8 +112,9 @@
   (local start (vim.loop.hrtime))
   (when (should-run?)
     (set vim.b.parinfer_changedtick vim.b.changedtick)
-    (let [[lnum col] (vim.api.nvim_win_get_cursor 0)
+    (let [winnr (vim.api.nvim_get_current_win)
           bufnr (vim.api.nvim_get_current_buf)
+          [lnum col] (vim.api.nvim_win_get_cursor winnr)
           orig-lines (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
           text (table.concat orig-lines "\n")
           response (invoke-parinfer text lnum col)]
@@ -125,8 +126,9 @@
             (when (not= response.text text)
               (log "change-response" response)
               (let [lines (vim.split response.text "\n")]
-                (vim.api.nvim_win_set_cursor 0 [lnum col])
-                (vim.schedule #(update-buffer bufnr lines)))))
+                (vim.schedule #(do
+                                 (update-buffer bufnr lines)
+                                 (vim.api.nvim_win_set_cursor winnr [lnum col]))))))
           (do
             (log "error-response" response)
             (set vim.g.parinfer_last_error response.error)))))
