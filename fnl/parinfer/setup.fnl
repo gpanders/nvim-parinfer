@@ -102,9 +102,8 @@
        (not vim.o.paste)
        (not vim.bo.readonly)
        vim.bo.modifiable
-       (not= vim.bo.buftype :prompt)
-       (is-undo-leaf?)
-       (not= vim.b.changedtick vim.b.parinfer_changedtick)))
+       (not= vim.b.changedtick vim.b.parinfer_changedtick)
+       (is-undo-leaf?)))
 
 (local elapsed-times [])
 

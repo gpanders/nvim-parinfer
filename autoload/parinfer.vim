@@ -26,7 +26,7 @@ function! parinfer#log(...) abort
 endfunction
 
 function! parinfer#init() abort
-    if &previewwindow
+    if &previewwindow || &buftype ==# 'prompt'
         return
     endif
 

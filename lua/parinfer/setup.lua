@@ -136,7 +136,7 @@ local function is_undo_leaf_3f()
   return (seq_cur == seq_last)
 end
 local function should_run_3f()
-  return (get_option_2a("parinfer_enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.bo.buftype ~= "prompt") and is_undo_leaf_3f() and (vim.b.changedtick ~= vim.b.parinfer_changedtick))
+  return (get_option_2a("parinfer_enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b.changedtick ~= vim.b.parinfer_changedtick) and is_undo_leaf_3f())
 end
 local elapsed_times = {}
 local function process_buffer()
