@@ -23,6 +23,8 @@
                 :paren parinfer.parenMode
                 :smart parinfer.smartMode}))
 
+(local ns (vim.api.nvim_create_namespace :parinfer))
+
 (fn log [tag data]
   "Log a message to the log file."
   (when vim.g.parinfer_logfile
@@ -93,6 +95,12 @@
   (vim.api.nvim_command "silent! undojoin")
   (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
+(fn highlight-error [bufnr err]
+  (vim.api.nvim_buf_clear_namespace bufnr ns 0 -1)
+  (when err
+    (let [[lnum col] [(- err.lineNo 1) (- err.x 1)]]
+      (vim.highlight.range bufnr ns :Error [lnum col] [lnum (+ col 1)] :c))))
+
 (fn is-undo-leaf? []
   (let [{: seq_cur : seq_last} (vim.fn.undotree)]
     (= seq_cur seq_last)))
@@ -126,9 +134,9 @@
           (vim.schedule #(do
                            (update-buffer bufnr lines)
                            (vim.api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
-      (when (not response.success)
-        (log "error-response" response)
-        (set vim.g.parinfer_last_error response.error))))
+      (highlight-error bufnr response.error)
+      (when response.error
+        (log "error-response" response))))
   (table.insert elapsed-times (- (vim.loop.hrtime) start)))
 
 (fn enter-buffer []
