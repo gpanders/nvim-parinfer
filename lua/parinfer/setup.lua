@@ -6,9 +6,9 @@ end
 local function log(tag, data)
   if vim.g.parinfer_logfile then
     local f = io.open(vim.g.parinfer_logfile, "a")
-    local function close_handlers_7_auto(ok_8_auto, ...)
+    local function close_handlers_8_auto(ok_9_auto, ...)
       f:close()
-      if ok_8_auto then
+      if ok_9_auto then
         return ...
       else
         return error(..., 0)
@@ -17,7 +17,9 @@ local function log(tag, data)
     local function _2_()
       return f:write(("%s: %s\n"):format(tag, vim.fn.json_encode(data)))
     end
-    return close_handlers_7_auto(xpcall(_2_, (package.loaded.fennel or debug).traceback))
+    return close_handlers_8_auto(_G.xpcall(_2_, (package.loaded.fennel or debug).traceback))
+  else
+    return nil
   end
 end
 local function get_option_2a(opt)
@@ -27,6 +29,8 @@ local function get_option_2a(opt)
     return v
   elseif (_4_ == nil) then
     return vim.g[opt]
+  else
+    return nil
   end
 end
 local function expand_tab_stops(tabstops)
@@ -44,9 +48,12 @@ local function expand_tab_stops(tabstops)
       table.insert(xs, _6_())
       if stop.argX then
         table.insert(xs, (stop.argX - 1))
+      else
       end
     end
     return xs
+  else
+    return nil
   end
 end
 local function next_stop(stops, col, forward)
@@ -57,9 +64,11 @@ local function next_stop(stops, col, forward)
       if right then break end
       if (col < stop) then
         right = stop
+      else
       end
       if (col > stop) then
         left = stop
+      else
       end
     end
     if forward then
@@ -67,6 +76,8 @@ local function next_stop(stops, col, forward)
     else
       return left
     end
+  else
+    return nil
   end
 end
 local function tab(forward)
@@ -84,21 +95,24 @@ local function tab(forward)
     elseif (_14_ == nil) then
       indent = 0
     else
-    indent = nil
+      indent = nil
     end
   end
   local next_x = nil
   if (col == indent) then
     next_x = next_stop(stops, col, forward)
+  else
   end
   if not next_x then
-    local _17_
-    if forward then
-      _17_ = 2
-    else
-      _17_ = -2
+    local function _17_()
+      if forward then
+        return 2
+      else
+        return -2
+      end
     end
-    next_x = math.max(0, (col + _17_))
+    next_x = math.max(0, (col + _17_()))
+  else
   end
   do
     local shift = (next_x - col)
@@ -111,17 +125,10 @@ local function tab(forward)
   return vim.api.nvim_win_set_cursor(0, {lnum, next_x})
 end
 local function invoke_parinfer(text, lnum, col)
-  local _let_21_ = (vim.b.parinfer_prev_cursor or {})
-  local prev_lnum = _let_21_[1]
-  local prev_col = _let_21_[2]
-  local request
-  local _22_
-  if prev_col then
-    _22_ = (prev_col + 1)
-  else
-  _22_ = nil
-  end
-  request = {commentChars = get_option_2a("parinfer_comment_chars"), cursorLine = lnum, cursorX = (col + 1), forceBalance = get_option_2a("parinfer_force_balance"), prevCursorLine = prev_lnum, prevCursorX = _22_}
+  local _let_20_ = (vim.b.parinfer_prev_cursor or {})
+  local prev_lnum = _let_20_[1]
+  local prev_col = _let_20_[2]
+  local request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), forceBalance = get_option_2a("parinfer_force_balance")}
   log("request", request)
   return modes[get_option_2a("parinfer_mode")](text, request)
 end
@@ -130,9 +137,9 @@ local function update_buffer(bufnr, lines)
   return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
 end
 local function is_undo_leaf_3f()
-  local _let_24_ = vim.fn.undotree()
-  local seq_cur = _let_24_["seq_cur"]
-  local seq_last = _let_24_["seq_last"]
+  local _let_21_ = vim.fn.undotree()
+  local seq_cur = _let_21_["seq_cur"]
+  local seq_last = _let_21_["seq_last"]
   return (seq_cur == seq_last)
 end
 local function should_run_3f()
@@ -145,30 +152,33 @@ local function process_buffer()
     vim.b.parinfer_changedtick = vim.b.changedtick
     local winnr = vim.api.nvim_get_current_win()
     local bufnr = vim.api.nvim_get_current_buf()
-    local _let_25_ = vim.api.nvim_win_get_cursor(winnr)
-    local lnum = _let_25_[1]
-    local col = _let_25_[2]
+    local _let_22_ = vim.api.nvim_win_get_cursor(winnr)
+    local lnum = _let_22_[1]
+    local col = _let_22_[2]
     local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
     local response = invoke_parinfer(text, lnum, col)
-    if response.success then
-      local lnum0 = response.cursorLine
-      local col0 = (response.cursorX - 1)
-      vim.b.parinfer_tabstops = response.tabStops
-      vim.b.parinfer_prev_cursor = {lnum0, col0}
-      if (response.text ~= text) then
-        log("change-response", response)
-        local lines = vim.split(response.text, "\n")
-        local function _26_()
-          update_buffer(bufnr, lines)
-          return vim.api.nvim_win_set_cursor(winnr, {lnum0, col0})
-        end
-        vim.schedule(_26_)
+    local _let_23_ = response
+    local new_lnum = _let_23_["cursorLine"]
+    local new_col = _let_23_["cursorX"]
+    vim.b.parinfer_tabstops = response.tabStops
+    vim.b.parinfer_prev_cursor = {new_lnum, new_col}
+    if (response.text ~= text) then
+      log("change-response", response)
+      local lines = vim.split(response.text, "\n")
+      local function _24_()
+        update_buffer(bufnr, lines)
+        return vim.api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
+      vim.schedule(_24_)
     else
+    end
+    if not response.success then
       log("error-response", response)
       vim.g.parinfer_last_error = response.error
+    else
     end
+  else
   end
   return table.insert(elapsed_times, (vim.loop.hrtime() - start))
 end
@@ -190,9 +200,11 @@ local function stats()
     for _, v in ipairs(elapsed_times) do
       if (v < min) then
         min = v
+      else
       end
       if (v > max) then
         max = v
+      else
       end
       sum = (sum + v)
       sumsq = (sumsq + (v * v))
@@ -201,6 +213,8 @@ local function stats()
     local sqsum = (sum * sum)
     local std = math.sqrt(((sumsq - (sqsum / n)) / (n - 1)))
     return print(("N: %d    Min: %0.6fms    Max: %0.6fms    Avg: %0.6fms    Std: %0.6fms"):format(n, (min / 1000000), (max / 1000000), (avg / 1000000), (std / 1000000)))
+  else
+    return nil
   end
 end
 parinfer = {enter_buffer = enter_buffer, process_buffer = process_buffer, stats = stats, tab = tab}

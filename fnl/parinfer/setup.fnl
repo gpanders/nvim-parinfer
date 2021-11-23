@@ -82,7 +82,7 @@
   (let [[prev-lnum prev-col] (or vim.b.parinfer_prev_cursor [])
          request {:commentChars (get-option :comment_chars)
                   :prevCursorLine prev-lnum
-                  :prevCursorX (if prev-col (+ prev-col 1))
+                  :prevCursorX prev-col
                   :cursorLine lnum
                   :cursorX (+ col 1)
                   :forceBalance (get-option :force_balance)}]
@@ -116,21 +116,19 @@
           [lnum col] (vim.api.nvim_win_get_cursor winnr)
           orig-lines (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
           text (table.concat orig-lines "\n")
-          response (invoke-parinfer text lnum col)]
-      (if response.success
-          (let [lnum response.cursorLine
-                col (- response.cursorX 1)]
-            (set vim.b.parinfer_tabstops response.tabStops)
-            (set vim.b.parinfer_prev_cursor [lnum col])
-            (when (not= response.text text)
-              (log "change-response" response)
-              (let [lines (vim.split response.text "\n")]
-                (vim.schedule #(do
-                                 (update-buffer bufnr lines)
-                                 (vim.api.nvim_win_set_cursor winnr [lnum col]))))))
-          (do
-            (log "error-response" response)
-            (set vim.g.parinfer_last_error response.error)))))
+          response (invoke-parinfer text lnum col)
+          {:cursorLine new-lnum :cursorX new-col} response]
+      (set vim.b.parinfer_tabstops response.tabStops)
+      (set vim.b.parinfer_prev_cursor [new-lnum new-col])
+      (when (not= response.text text)
+        (log "change-response" response)
+        (let [lines (vim.split response.text "\n")]
+          (vim.schedule #(do
+                           (update-buffer bufnr lines)
+                           (vim.api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
+      (when (not response.success)
+        (log "error-response" response)
+        (set vim.g.parinfer_last_error response.error))))
   (table.insert elapsed-times (- (vim.loop.hrtime) start)))
 
 (fn enter-buffer []
