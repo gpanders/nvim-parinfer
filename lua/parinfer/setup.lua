@@ -1,9 +1,10 @@
+local api = vim.api
 local modes
 do
   local parinfer = require("parinfer")
   modes = {indent = parinfer.indentMode, paren = parinfer.parenMode, smart = parinfer.smartMode}
 end
-local ns = vim.api.nvim_create_namespace("parinfer")
+local ns = api.nvim_create_namespace("parinfer")
 local function log(tag, data)
   if vim.g.parinfer_logfile then
     local f = io.open(vim.g.parinfer_logfile, "a")
@@ -83,10 +84,10 @@ local function next_stop(stops, col, forward)
 end
 local function tab(forward)
   local stops = expand_tab_stops(vim.b.parinfer_tabstops)
-  local _let_13_ = vim.api.nvim_win_get_cursor(0)
+  local _let_13_ = api.nvim_win_get_cursor(0)
   local lnum = _let_13_[1]
   local col = _let_13_[2]
-  local line = (vim.api.nvim_buf_get_lines(0, (lnum - 1), lnum, true))[1]
+  local line = (api.nvim_buf_get_lines(0, (lnum - 1), lnum, true))[1]
   local indent
   do
     local _14_ = line:match("^%s+")
@@ -118,12 +119,12 @@ local function tab(forward)
   do
     local shift = (next_x - col)
     if (shift > 0) then
-      vim.api.nvim_buf_set_text(0, (lnum - 1), 0, (lnum - 1), 0, {string.rep(" ", shift)})
+      api.nvim_buf_set_text(0, (lnum - 1), 0, (lnum - 1), 0, {string.rep(" ", shift)})
     else
-      vim.api.nvim_buf_set_text(0, (lnum - 1), 0, (lnum - 1), (-1 * shift), {""})
+      api.nvim_buf_set_text(0, (lnum - 1), 0, (lnum - 1), (-1 * shift), {""})
     end
   end
-  return vim.api.nvim_win_set_cursor(0, {lnum, next_x})
+  return api.nvim_win_set_cursor(0, {lnum, next_x})
 end
 local function invoke_parinfer(text, lnum, col)
   local _let_20_ = (vim.b.parinfer_prev_cursor or {})
@@ -134,11 +135,11 @@ local function invoke_parinfer(text, lnum, col)
   return modes[get_option_2a("parinfer_mode")](text, request)
 end
 local function update_buffer(bufnr, lines)
-  vim.api.nvim_command("silent! undojoin")
-  return vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+  api.nvim_command("silent! undojoin")
+  return api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
 end
 local function highlight_error(bufnr, err)
-  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+  api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   if err then
     local _let_21_ = {(err.lineNo - 1), (err.x - 1)}
     local lnum = _let_21_[1]
@@ -162,12 +163,12 @@ local function process_buffer()
   local start = vim.loop.hrtime()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
-    local winnr = vim.api.nvim_get_current_win()
-    local bufnr = vim.api.nvim_get_current_buf()
-    local _let_24_ = vim.api.nvim_win_get_cursor(winnr)
+    local winnr = api.nvim_get_current_win()
+    local bufnr = api.nvim_get_current_buf()
+    local _let_24_ = api.nvim_win_get_cursor(winnr)
     local lnum = _let_24_[1]
     local col = _let_24_[2]
-    local orig_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+    local orig_lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
     local response = invoke_parinfer(text, lnum, col)
     local _let_25_ = response
@@ -180,7 +181,7 @@ local function process_buffer()
       local lines = vim.split(response.text, "\n")
       local function _26_()
         update_buffer(bufnr, lines)
-        return vim.api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
+        return api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
       vim.schedule(_26_)
     else
@@ -230,4 +231,4 @@ local function stats()
   end
 end
 parinfer = {enter_buffer = enter_buffer, process_buffer = process_buffer, stats = stats, tab = tab}
-return vim.api.nvim_command("command! ParinferStats lua parinfer.stats()")
+return api.nvim_command("command! ParinferStats lua parinfer.stats()")

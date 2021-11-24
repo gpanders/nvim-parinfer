@@ -15,6 +15,8 @@
 ; You should have received a copy of the GNU General Public License
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+(local api vim.api)
+
 ; Use a table lookup to translate between mode names and functions
 ; This saves us from having to do a string concatenation on every invocation of
 ; parinfer, which can be wasteful
@@ -23,7 +25,7 @@
                 :paren parinfer.parenMode
                 :smart parinfer.smartMode}))
 
-(local ns (vim.api.nvim_create_namespace :parinfer))
+(local ns (api.nvim_create_namespace :parinfer))
 
 (fn log [tag data]
   "Log a message to the log file."
@@ -64,8 +66,8 @@
 
 (fn tab [forward]
   (let [stops (expand-tab-stops vim.b.parinfer_tabstops)
-        [lnum col] (vim.api.nvim_win_get_cursor 0)
-        line (. (vim.api.nvim_buf_get_lines 0 (- lnum 1) lnum true) 1)
+        [lnum col] (api.nvim_win_get_cursor 0)
+        line (. (api.nvim_buf_get_lines 0 (- lnum 1) lnum true) 1)
         indent (match (line:match "^%s+")
                  s (length s)
                  nil 0)]
@@ -76,9 +78,9 @@
       (set next-x (math.max 0 (+ col (if forward 2 -2)))))
     (let [shift (- next-x col)]
       (if (> shift 0)
-          (vim.api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) 0 [(string.rep " " shift)])
-          (vim.api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) (* -1 shift) [""])))
-    (vim.api.nvim_win_set_cursor 0 [lnum next-x])))
+          (api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) 0 [(string.rep " " shift)])
+          (api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) (* -1 shift) [""])))
+    (api.nvim_win_set_cursor 0 [lnum next-x])))
 
 (fn invoke-parinfer [text lnum col]
   (let [[prev-lnum prev-col] (or vim.b.parinfer_prev_cursor [])
@@ -92,11 +94,11 @@
     ((. modes (get-option :mode)) text request)))
 
 (fn update-buffer [bufnr lines]
-  (vim.api.nvim_command "silent! undojoin")
-  (vim.api.nvim_buf_set_lines bufnr 0 -1 true lines))
+  (api.nvim_command "silent! undojoin")
+  (api.nvim_buf_set_lines bufnr 0 -1 true lines))
 
 (fn highlight-error [bufnr err]
-  (vim.api.nvim_buf_clear_namespace bufnr ns 0 -1)
+  (api.nvim_buf_clear_namespace bufnr ns 0 -1)
   (when err
     (let [[lnum col] [(- err.lineNo 1) (- err.x 1)]]
       (vim.highlight.range bufnr ns :Error [lnum col] [lnum (+ col 1)] :c))))
@@ -119,10 +121,10 @@
   (local start (vim.loop.hrtime))
   (when (should-run?)
     (set vim.b.parinfer_changedtick vim.b.changedtick)
-    (let [winnr (vim.api.nvim_get_current_win)
-          bufnr (vim.api.nvim_get_current_buf)
-          [lnum col] (vim.api.nvim_win_get_cursor winnr)
-          orig-lines (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
+    (let [winnr (api.nvim_get_current_win)
+          bufnr (api.nvim_get_current_buf)
+          [lnum col] (api.nvim_win_get_cursor winnr)
+          orig-lines (api.nvim_buf_get_lines bufnr 0 -1 true)
           text (table.concat orig-lines "\n")
           response (invoke-parinfer text lnum col)
           {:cursorLine new-lnum :cursorX new-col} response]
@@ -133,7 +135,7 @@
         (let [lines (vim.split response.text "\n")]
           (vim.schedule #(do
                            (update-buffer bufnr lines)
-                           (vim.api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
+                           (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
       (highlight-error bufnr response.error)
       (when response.error
         (log "error-response" response))))
@@ -173,4 +175,4 @@
                   : stats
                   : tab})
 
-(vim.api.nvim_command "command! ParinferStats lua parinfer.stats()")
+(api.nvim_command "command! ParinferStats lua parinfer.stats()")
