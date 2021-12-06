@@ -121,28 +121,28 @@
                                                (rawget t k))}))
 
 (fn process-buffer []
-  (let [start (vim.loop.hrtime)
-        bufnr (api.nvim_get_current_buf)]
-    (when (should-run?)
-      (set vim.b.parinfer_changedtick vim.b.changedtick)
-      (let [winnr (api.nvim_get_current_win)
-            [lnum col] (api.nvim_win_get_cursor winnr)
-            orig-lines (api.nvim_buf_get_lines bufnr 0 -1 true)
-            text (table.concat orig-lines "\n")
-            response (invoke-parinfer text lnum col)
-            {:cursorLine new-lnum :cursorX new-col} response]
-        (set vim.b.parinfer_tabstops response.tabStops)
-        (set vim.b.parinfer_prev_cursor [new-lnum new-col])
-        (when (not= response.text text)
-          (log "change-response" response)
-          (let [lines (vim.split response.text "\n")]
-            (vim.schedule #(do
-                             (update-buffer bufnr lines)
-                             (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
-        (highlight-error bufnr response.error)
-        (when response.error
-          (log "error-response" response))))
-    (table.insert (. elapsed-times bufnr) (- (vim.loop.hrtime) start))))
+  (when (should-run?)
+    (set vim.b.parinfer_changedtick vim.b.changedtick)
+    (let [start (vim.loop.hrtime)
+          winnr (api.nvim_get_current_win)
+          bufnr (api.nvim_get_current_buf)
+          [lnum col] (api.nvim_win_get_cursor winnr)
+          orig-lines (api.nvim_buf_get_lines bufnr 0 -1 true)
+          text (table.concat orig-lines "\n")
+          response (invoke-parinfer text lnum col)
+          {:cursorLine new-lnum :cursorX new-col} response]
+      (set vim.b.parinfer_tabstops response.tabStops)
+      (set vim.b.parinfer_prev_cursor [new-lnum new-col])
+      (when (not= response.text text)
+        (log "change-response" response)
+        (let [lines (vim.split response.text "\n")]
+          (vim.schedule #(do
+                           (update-buffer bufnr lines)
+                           (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
+      (highlight-error bufnr response.error)
+      (when response.error
+        (log "error-response" response))
+      (table.insert (. elapsed-times bufnr) (- (vim.loop.hrtime) start)))))
 
 (fn enter-buffer []
   (set vim.b.parinfer_last_changedtick -1)

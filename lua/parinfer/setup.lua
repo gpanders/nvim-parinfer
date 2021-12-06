@@ -165,11 +165,11 @@ local function _24_(t, k)
 end
 elapsed_times = setmetatable({}, {__index = _24_})
 local function process_buffer()
-  local start = vim.loop.hrtime()
-  local bufnr = api.nvim_get_current_buf()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
+    local start = vim.loop.hrtime()
     local winnr = api.nvim_get_current_win()
+    local bufnr = api.nvim_get_current_buf()
     local _let_25_ = api.nvim_win_get_cursor(winnr)
     local lnum = _let_25_[1]
     local col = _let_25_[2]
@@ -196,9 +196,10 @@ local function process_buffer()
       log("error-response", response)
     else
     end
+    return table.insert(elapsed_times[bufnr], (vim.loop.hrtime() - start))
   else
+    return nil
   end
-  return table.insert(elapsed_times[bufnr], (vim.loop.hrtime() - start))
 end
 local function enter_buffer()
   vim.b.parinfer_last_changedtick = -1
