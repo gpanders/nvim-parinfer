@@ -158,32 +158,37 @@ end
 local function should_run_3f()
   return (get_option_2a("parinfer_enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b.changedtick ~= vim.b.parinfer_changedtick) and is_undo_leaf_3f())
 end
-local elapsed_times = {}
+local elapsed_times
+local function _24_(t, k)
+  t[k] = {}
+  return rawget(t, k)
+end
+elapsed_times = setmetatable({}, {__index = _24_})
 local function process_buffer()
   local start = vim.loop.hrtime()
+  local bufnr = api.nvim_get_current_buf()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
     local winnr = api.nvim_get_current_win()
-    local bufnr = api.nvim_get_current_buf()
-    local _let_24_ = api.nvim_win_get_cursor(winnr)
-    local lnum = _let_24_[1]
-    local col = _let_24_[2]
+    local _let_25_ = api.nvim_win_get_cursor(winnr)
+    local lnum = _let_25_[1]
+    local col = _let_25_[2]
     local orig_lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
     local response = invoke_parinfer(text, lnum, col)
-    local _let_25_ = response
-    local new_lnum = _let_25_["cursorLine"]
-    local new_col = _let_25_["cursorX"]
+    local _let_26_ = response
+    local new_lnum = _let_26_["cursorLine"]
+    local new_col = _let_26_["cursorX"]
     vim.b.parinfer_tabstops = response.tabStops
     vim.b.parinfer_prev_cursor = {new_lnum, new_col}
     if (response.text ~= text) then
       log("change-response", response)
       local lines = vim.split(response.text, "\n")
-      local function _26_()
+      local function _27_()
         update_buffer(bufnr, lines)
         return api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
-      vim.schedule(_26_)
+      vim.schedule(_27_)
     else
     end
     highlight_error(bufnr, response.error)
@@ -193,7 +198,7 @@ local function process_buffer()
     end
   else
   end
-  return table.insert(elapsed_times, (vim.loop.hrtime() - start))
+  return table.insert(elapsed_times[bufnr], (vim.loop.hrtime() - start))
 end
 local function enter_buffer()
   vim.b.parinfer_last_changedtick = -1
@@ -204,13 +209,15 @@ local function enter_buffer()
   return nil
 end
 local function stats()
-  local n = #elapsed_times
+  local bufnr = api.nvim_get_current_buf()
+  local times = elapsed_times[bufnr]
+  local n = #times
   if (n > 0) then
     local min = math.huge
     local max = 0
     local sum = 0
     local sumsq = 0
-    for _, v in ipairs(elapsed_times) do
+    for _, v in ipairs(times) do
       if (v < min) then
         min = v
       else
@@ -231,4 +238,4 @@ local function stats()
   end
 end
 parinfer = {enter_buffer = enter_buffer, process_buffer = process_buffer, stats = stats, tab = tab}
-return api.nvim_command("command! ParinferStats lua parinfer.stats()")
+return nil

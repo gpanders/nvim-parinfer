@@ -30,6 +30,10 @@ function! parinfer#init() abort
         return
     endif
 
+    let b:parinfer_enabled = get(g:, 'parinfer_enabled', 1)
+
+    command! -buffer ParinferStats lua parinfer.stats()
+
     lua parinfer.enter_buffer()
 
     augroup parinfer

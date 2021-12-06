@@ -115,31 +115,34 @@
        (not= vim.b.changedtick vim.b.parinfer_changedtick)
        (is-undo-leaf?)))
 
-(local elapsed-times [])
+(local elapsed-times (setmetatable {}
+                                   {:__index (fn [t k]
+                                               (tset t k [])
+                                               (rawget t k))}))
 
 (fn process-buffer []
-  (local start (vim.loop.hrtime))
-  (when (should-run?)
-    (set vim.b.parinfer_changedtick vim.b.changedtick)
-    (let [winnr (api.nvim_get_current_win)
-          bufnr (api.nvim_get_current_buf)
-          [lnum col] (api.nvim_win_get_cursor winnr)
-          orig-lines (api.nvim_buf_get_lines bufnr 0 -1 true)
-          text (table.concat orig-lines "\n")
-          response (invoke-parinfer text lnum col)
-          {:cursorLine new-lnum :cursorX new-col} response]
-      (set vim.b.parinfer_tabstops response.tabStops)
-      (set vim.b.parinfer_prev_cursor [new-lnum new-col])
-      (when (not= response.text text)
-        (log "change-response" response)
-        (let [lines (vim.split response.text "\n")]
-          (vim.schedule #(do
-                           (update-buffer bufnr lines)
-                           (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
-      (highlight-error bufnr response.error)
-      (when response.error
-        (log "error-response" response))))
-  (table.insert elapsed-times (- (vim.loop.hrtime) start)))
+  (let [start (vim.loop.hrtime)
+        bufnr (api.nvim_get_current_buf)]
+    (when (should-run?)
+      (set vim.b.parinfer_changedtick vim.b.changedtick)
+      (let [winnr (api.nvim_get_current_win)
+            [lnum col] (api.nvim_win_get_cursor winnr)
+            orig-lines (api.nvim_buf_get_lines bufnr 0 -1 true)
+            text (table.concat orig-lines "\n")
+            response (invoke-parinfer text lnum col)
+            {:cursorLine new-lnum :cursorX new-col} response]
+        (set vim.b.parinfer_tabstops response.tabStops)
+        (set vim.b.parinfer_prev_cursor [new-lnum new-col])
+        (when (not= response.text text)
+          (log "change-response" response)
+          (let [lines (vim.split response.text "\n")]
+            (vim.schedule #(do
+                             (update-buffer bufnr lines)
+                             (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
+        (highlight-error bufnr response.error)
+        (when response.error
+          (log "error-response" response))))
+    (table.insert (. elapsed-times bufnr) (- (vim.loop.hrtime) start))))
 
 (fn enter-buffer []
   (set vim.b.parinfer_last_changedtick -1)
@@ -149,30 +152,30 @@
     (set vim.g.parinfer_mode mode)))
 
 (fn stats []
-  (local n (length elapsed-times))
-  (when (> n 0)
-    (var min math.huge)
-    (var max 0)
-    (var sum 0)
-    (var sumsq 0)
-    (each [_ v (ipairs elapsed-times)]
-      (when (< v min)
-        (set min v))
-      (when (> v max)
-        (set max v))
-      (set sum (+ sum v))
-      (set sumsq (+ sumsq (* v v))))
-    (local avg (/ sum n))
-    (local sqsum (* sum sum))
-    (local std (math.sqrt (/ (- sumsq (/ sqsum n)) (- n 1))))
-    (print (: "N: %d    Min: %0.6fms    Max: %0.6fms    Avg: %0.6fms    Std: %0.6fms"
-              :format
-              n
-              (/ min 1000000) (/ max 1000000) (/ avg 1000000) (/ std 1000000)))))
+  (let [bufnr (api.nvim_get_current_buf)
+        times (. elapsed-times bufnr)
+        n (length times)]
+    (when (> n 0)
+      (var min math.huge)
+      (var max 0)
+      (var sum 0)
+      (var sumsq 0)
+      (each [_ v (ipairs times)]
+        (when (< v min)
+          (set min v))
+        (when (> v max)
+          (set max v))
+        (set sum (+ sum v))
+        (set sumsq (+ sumsq (* v v))))
+      (local avg (/ sum n))
+      (local sqsum (* sum sum))
+      (local std (math.sqrt (/ (- sumsq (/ sqsum n)) (- n 1))))
+      (print (: "N: %d    Min: %0.6fms    Max: %0.6fms    Avg: %0.6fms    Std: %0.6fms"
+                :format
+                n
+                (/ min 1000000) (/ max 1000000) (/ avg 1000000) (/ std 1000000))))))
 
 (global parinfer {:enter_buffer enter-buffer
                   :process_buffer process-buffer
                   : stats
                   : tab})
-
-(api.nvim_command "command! ParinferStats lua parinfer.stats()")
