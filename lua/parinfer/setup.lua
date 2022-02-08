@@ -203,6 +203,7 @@ local function process_buffer(bufnr)
     local _let_30_ = response
     local new_lnum = _let_30_["cursorLine"]
     local new_col = _let_30_["cursorX"]
+    state[bufnr]["changedtick"] = vim.b[bufnr].changedtick
     state[bufnr]["tabstops"] = response.tabStops
     state[bufnr]["prev-cursor"] = {new_lnum, new_col}
     if (response.text ~= text) then
@@ -250,9 +251,8 @@ local function slice(lines, start_row, start_col, end_row, end_col)
   end
   return out
 end
-local function on_bytes(_, bufnr, changedtick, start_row, start_col, _0, old_end_row, old_end_col, _1, new_end_row, new_end_col)
+local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old_end_col, _2, new_end_row, new_end_col)
   if true_3f(get_option_2a("parinfer_enabled")) then
-    state[bufnr]["changedtick"] = changedtick
     local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local _let_37_ = state[bufnr]
     local prev_contents = _let_37_["prev-contents"]

@@ -143,6 +143,7 @@
           text (table.concat contents "\n")
           response (invoke-parinfer bufnr text lnum col)
           {:cursorLine new-lnum :cursorX new-col} response]
+      (tset state bufnr :changedtick (. vim.b bufnr :changedtick))
       (tset state bufnr :tabstops response.tabStops)
       (tset state bufnr :prev-cursor [new-lnum new-col])
       (when (not= response.text text)
@@ -170,9 +171,8 @@
       (table.insert out (string.sub (. lines end-row) 1 end-col)))
     out))
 
-(fn on-bytes [_ bufnr changedtick start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
+(fn on-bytes [_ bufnr _ start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
   (when (true? (get-option :enabled))
-    (tset state bufnr :changedtick changedtick)
     (let [contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
           {: prev-contents} (. state bufnr)
           old-end-row (if (= 0 old-end-row) start-row (+ start-row (- old-end-row 1)))
