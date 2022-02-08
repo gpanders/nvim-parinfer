@@ -256,8 +256,18 @@ local function on_bytes(_, bufnr, changedtick, start_row, start_col, _0, old_end
     local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local _let_37_ = state[bufnr]
     local prev_contents = _let_37_["prev-contents"]
-    local old_end_row0 = (start_row + old_end_row)
-    local new_end_row0 = (start_row + new_end_row)
+    local old_end_row0
+    if (0 == old_end_row) then
+      old_end_row0 = start_row
+    else
+      old_end_row0 = (start_row + (old_end_row - 1))
+    end
+    local new_end_row0
+    if (0 == new_end_row) then
+      new_end_row0 = start_row
+    else
+      new_end_row0 = (start_row + (new_end_row - 1))
+    end
     local old_end_col0 = (start_col + old_end_col)
     local new_end_col0 = (start_col + new_end_col)
     local old_text = slice(prev_contents, start_row, start_col, old_end_row0, old_end_col0)
