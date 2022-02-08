@@ -136,7 +136,6 @@
 
 (fn process-buffer [bufnr]
   (when (should-run? bufnr)
-    (tset state bufnr :changedtick (. vim.b bufnr :changedtick))
     (let [start (vim.loop.hrtime)
           winnr (api.nvim_get_current_win)
           [lnum col] (api.nvim_win_get_cursor winnr)

@@ -192,7 +192,6 @@ end
 elapsed_times = setmetatable({}, {__index = _28_})
 local function process_buffer(bufnr)
   if should_run_3f(bufnr) then
-    state[bufnr]["changedtick"] = vim.b[bufnr].changedtick
     local start = vim.loop.hrtime()
     local winnr = api.nvim_get_current_win()
     local _let_29_ = api.nvim_win_get_cursor(winnr)
