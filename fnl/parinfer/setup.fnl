@@ -173,19 +173,23 @@
 
 (fn on-bytes [_ bufnr _ start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
   (when (true? (get-option :enabled))
-    (let [contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
-          {: prev-contents} (. state bufnr)
-          old-end-row (if (= 0 old-end-row) start-row (+ start-row (- old-end-row 1)))
-          new-end-row (if (= 0 new-end-row) start-row (+ start-row (- new-end-row 1)))
-          old-end-col (+ start-col old-end-col)
-          new-end-col (+ start-col new-end-col)
-          old-text (slice prev-contents start-row start-col old-end-row old-end-col)
-          new-text (slice contents start-row start-col new-end-row new-end-col)]
-      (tset state bufnr :prev-contents contents)
-      (tset state bufnr :changes [{:oldText (table.concat old-text "\n")
-                                   :newText (table.concat new-text "\n")
-                                   :lineNo (+ start-row 1)
-                                   :x (+ start-col 1)}]))))
+    (let [{: prev-contents} (. state bufnr)]
+      ; If start row is greater than the length of prev-contents that means we
+      ; are adding a new line to the end of the buffer, so there are no
+      ; "changes"
+      (when (< start-row (length prev-contents))
+        (let [contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
+              old-end-row (if (= 0 old-end-row) start-row (+ start-row (- old-end-row 1)))
+              new-end-row (if (= 0 new-end-row) start-row (+ start-row (- new-end-row 1)))
+              old-end-col (+ start-col old-end-col)
+              new-end-col (+ start-col new-end-col)
+              old-text (slice prev-contents start-row start-col old-end-row old-end-col)
+              new-text (slice contents start-row start-col new-end-row new-end-col)]
+          (tset state bufnr :prev-contents contents)
+          (tset state bufnr :changes [{:oldText (table.concat old-text "\n")
+                                       :newText (table.concat new-text "\n")
+                                       :lineNo (+ start-row 1)
+                                       :x (+ start-col 1)}]))))))
 
 (fn enter-buffer []
   (let [bufnr (vim.api.nvim_get_current_buf)
