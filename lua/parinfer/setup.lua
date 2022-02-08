@@ -153,9 +153,12 @@ local function invoke_parinfer(bufnr, text, lnum, col)
   local _let_24_ = (state[bufnr]["prev-cursor"] or {})
   local prev_lnum = _let_24_[1]
   local prev_col = _let_24_[2]
-  local request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), forceBalance = true_3f(get_option_2a("parinfer_force_balance"))}
+  local changes = state[bufnr].changes
+  local request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), changes = changes, forceBalance = true_3f(get_option_2a("parinfer_force_balance"))}
+  local response = modes[get_option_2a("parinfer_mode")](text, request)
   log("request", request)
-  return modes[get_option_2a("parinfer_mode")](text, request)
+  do end (state)[bufnr]["changes"] = nil
+  return response
 end
 local function update_buffer(bufnr, lines)
   api.nvim_command("silent! undojoin")
@@ -223,9 +226,56 @@ local function process_buffer(bufnr)
     return nil
   end
 end
+local function slice(lines, start_row, start_col, end_row, end_col)
+  local start_row0 = (start_row + 1)
+  local start_col0 = (start_col + 1)
+  local end_row0 = (end_row + 1)
+  local end_col0 = (end_col + 1)
+  local first_line
+  local function _35_()
+    if (start_row0 == end_row0) then
+      return end_col0
+    else
+      return -1
+    end
+  end
+  first_line = string.sub(lines[start_row0], start_col0, _35_())
+  local out = {first_line}
+  for i = (start_row0 + 1), (end_row0 - 1) do
+    local line = lines[i]
+    table.insert(out, line)
+  end
+  if (start_row0 ~= end_row0) then
+    table.insert(out, string.sub(lines[end_row0], 1, end_col0))
+  else
+  end
+  return out
+end
+local function on_bytes(_, bufnr, changedtick, start_row, start_col, _0, old_end_row, old_end_col, _1, new_end_row, new_end_col)
+  if true_3f(get_option_2a("parinfer_enabled")) then
+    state[bufnr]["changedtick"] = changedtick
+    local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+    local _let_37_ = state[bufnr]
+    local prev_contents = _let_37_["prev-contents"]
+    local old_end_row0 = (start_row + old_end_row)
+    local new_end_row0 = (start_row + new_end_row)
+    local old_end_col0 = (start_col + old_end_col)
+    local new_end_col0 = (start_col + new_end_col)
+    local old_text = slice(prev_contents, start_row, start_col, old_end_row0, old_end_col0)
+    local new_text = slice(contents, start_row, start_col, new_end_row0, new_end_col0)
+    do end (state)[bufnr]["prev-contents"] = contents
+    state[bufnr]["changes"] = {{oldText = table.concat(old_text, "\n"), newText = table.concat(new_text, "\n"), lineNo = (start_row + 1), x = (start_col + 1)}}
+    return nil
+  else
+    return nil
+  end
+end
 local function enter_buffer()
   local bufnr = vim.api.nvim_get_current_buf()
+  local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
   do end (state)[bufnr]["changedtick"] = -1
+  state[bufnr]["prev-contents"] = contents
+  vim.api.nvim_buf_attach(bufnr, false, {on_bytes = on_bytes})
   local mode = vim.g.parinfer_mode
   vim.g.parinfer_mode = "paren"
   process_buffer(bufnr)

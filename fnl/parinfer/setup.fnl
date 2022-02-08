@@ -94,14 +94,18 @@
 
 (fn invoke-parinfer [bufnr text lnum col]
   (let [[prev-lnum prev-col] (or (. state bufnr :prev-cursor) [])
-         request {:commentChars (get-option :comment_chars)
-                  :prevCursorLine prev-lnum
-                  :prevCursorX prev-col
-                  :cursorLine lnum
-                  :cursorX (+ col 1)
-                  :forceBalance (true? (get-option :force_balance))}]
+        changes (. state bufnr :changes)
+        request {:commentChars (get-option :comment_chars)
+                 :prevCursorLine prev-lnum
+                 :prevCursorX prev-col
+                 :cursorLine lnum
+                 :cursorX (+ col 1)
+                 : changes
+                 :forceBalance (true? (get-option :force_balance))}
+        response ((. modes (get-option :mode)) text request)]
     (log "request" request)
-    ((. modes (get-option :mode)) text request)))
+    (tset state bufnr :changes nil)
+    response))
 
 (fn update-buffer [bufnr lines]
   (api.nvim_command "silent! undojoin")
@@ -153,9 +157,43 @@
         (log "error-response" response))
       (table.insert (. elapsed-times bufnr) (- (vim.loop.hrtime) start)))))
 
+(fn slice [lines start-row start-col end-row end-col]
+  (let [start-row (+ start-row 1)
+        start-col (+ start-col 1)
+        end-row (+ end-row 1)
+        end-col (+ end-col 1)
+        first-line (string.sub (. lines start-row) start-col (if (= start-row end-row) end-col -1))
+        out [first-line]]
+    (for [i (+ start-row 1) (- end-row 1)]
+      (let [line (. lines i)]
+        (table.insert out line)))
+    (when (not= start-row end-row)
+      (table.insert out (string.sub (. lines end-row) 1 end-col)))
+    out))
+
+(fn on-bytes [_ bufnr changedtick start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
+  (when (true? (get-option :enabled))
+    (tset state bufnr :changedtick changedtick)
+    (let [contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
+          {: prev-contents} (. state bufnr)
+          old-end-row (+ start-row old-end-row)
+          new-end-row (+ start-row new-end-row)
+          old-end-col (+ start-col old-end-col)
+          new-end-col (+ start-col new-end-col)
+          old-text (slice prev-contents start-row start-col old-end-row old-end-col)
+          new-text (slice contents start-row start-col new-end-row new-end-col)]
+      (tset state bufnr :prev-contents contents)
+      (tset state bufnr :changes [{:oldText (table.concat old-text "\n")
+                                   :newText (table.concat new-text "\n")
+                                   :lineNo (+ start-row 1)
+                                   :x (+ start-col 1)}]))))
+
 (fn enter-buffer []
-  (let [bufnr (vim.api.nvim_get_current_buf)]
+  (let [bufnr (vim.api.nvim_get_current_buf)
+        contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)]
     (tset state bufnr :changedtick -1)
+    (tset state bufnr :prev-contents contents)
+    (vim.api.nvim_buf_attach bufnr false {:on_bytes on-bytes})
     (let [mode vim.g.parinfer_mode]
       (set vim.g.parinfer_mode :paren)
       (process-buffer bufnr)
