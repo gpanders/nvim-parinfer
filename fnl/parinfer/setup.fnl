@@ -27,6 +27,10 @@
 
 (local ns (api.nvim_create_namespace :parinfer))
 
+(local state (setmetatable {} {:__index (fn [t k]
+                                          (tset t k {})
+                                          (. t k))}))
+
 (fn true? [val]
   (match val
     (where n (= (type n) :boolean)) n
@@ -70,7 +74,8 @@
         left)))
 
 (fn tab [forward]
-  (let [stops (expand-tab-stops vim.b.parinfer_tabstops)
+  (let [bufnr (vim.api.nvim_get_current_buf)
+        stops (expand-tab-stops (. state bufnr :tabstops))
         [lnum col] (api.nvim_win_get_cursor 0)
         line (. (api.nvim_buf_get_lines 0 (- lnum 1) lnum true) 1)
         indent (match (line:match "^%s+")
@@ -87,8 +92,8 @@
           (api.nvim_buf_set_text 0 (- lnum 1) 0 (- lnum 1) (* -1 shift) [""])))
     (api.nvim_win_set_cursor 0 [lnum next-x])))
 
-(fn invoke-parinfer [text lnum col]
-  (let [[prev-lnum prev-col] (or vim.b.parinfer_prev_cursor [])
+(fn invoke-parinfer [bufnr text lnum col]
+  (let [[prev-lnum prev-col] (or (. state bufnr :prev-cursor) [])
          request {:commentChars (get-option :comment_chars)
                   :prevCursorLine prev-lnum
                   :prevCursorX prev-col
@@ -112,12 +117,12 @@
   (let [{: seq_cur : seq_last} (vim.fn.undotree)]
     (= seq_cur seq_last)))
 
-(fn should-run? []
+(fn should-run? [bufnr]
   (and (true? (get-option :enabled))
        (not vim.o.paste)
        (not vim.bo.readonly)
        vim.bo.modifiable
-       (not= vim.b.changedtick vim.b.parinfer_changedtick)
+       (not= (. vim.b bufnr :changedtick) (. state bufnr :changedtick))
        (is-undo-leaf?)))
 
 (local elapsed-times (setmetatable {}
@@ -125,19 +130,18 @@
                                                (tset t k [])
                                                (rawget t k))}))
 
-(fn process-buffer []
-  (when (should-run?)
-    (set vim.b.parinfer_changedtick vim.b.changedtick)
+(fn process-buffer [bufnr]
+  (when (should-run? bufnr)
+    (tset state bufnr :changedtick (. vim.b bufnr :changedtick))
     (let [start (vim.loop.hrtime)
           winnr (api.nvim_get_current_win)
-          bufnr (api.nvim_get_current_buf)
           [lnum col] (api.nvim_win_get_cursor winnr)
-          orig-lines (api.nvim_buf_get_lines bufnr 0 -1 true)
-          text (table.concat orig-lines "\n")
-          response (invoke-parinfer text lnum col)
+          contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
+          text (table.concat contents "\n")
+          response (invoke-parinfer bufnr text lnum col)
           {:cursorLine new-lnum :cursorX new-col} response]
-      (set vim.b.parinfer_tabstops response.tabStops)
-      (set vim.b.parinfer_prev_cursor [new-lnum new-col])
+      (tset state bufnr :tabstops response.tabStops)
+      (tset state bufnr :prev-cursor [new-lnum new-col])
       (when (not= response.text text)
         (log "change-response" response)
         (let [lines (vim.split response.text "\n")]
@@ -150,11 +154,12 @@
       (table.insert (. elapsed-times bufnr) (- (vim.loop.hrtime) start)))))
 
 (fn enter-buffer []
-  (set vim.b.parinfer_last_changedtick -1)
-  (let [mode vim.g.parinfer_mode]
-    (set vim.g.parinfer_mode :paren)
-    (process-buffer)
-    (set vim.g.parinfer_mode mode)))
+  (let [bufnr (vim.api.nvim_get_current_buf)]
+    (tset state bufnr :changedtick -1)
+    (let [mode vim.g.parinfer_mode]
+      (set vim.g.parinfer_mode :paren)
+      (process-buffer bufnr)
+      (set vim.g.parinfer_mode mode))))
 
 (fn stats []
   (let [bufnr (api.nvim_get_current_buf)
