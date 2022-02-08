@@ -130,7 +130,25 @@ local function invoke_parinfer(text, lnum, col)
   local _let_20_ = (vim.b.parinfer_prev_cursor or {})
   local prev_lnum = _let_20_[1]
   local prev_col = _let_20_[2]
-  local request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), forceBalance = get_option_2a("parinfer_force_balance")}
+  local request
+  local _22_
+  do
+    local _21_ = get_option_2a("parinfer_force_balance")
+    local function _23_()
+      local n = _21_
+      return (type(n) == "boolean")
+    end
+    if ((nil ~= _21_) and _23_()) then
+      local n = _21_
+      _22_ = n
+    elseif (nil ~= _21_) then
+      local n = _21_
+      _22_ = (n ~= 0)
+    else
+      _22_ = nil
+    end
+  end
+  request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), forceBalance = _22_}
   log("request", request)
   return modes[get_option_2a("parinfer_mode")](text, request)
 end
@@ -141,54 +159,54 @@ end
 local function highlight_error(bufnr, err)
   api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   if err then
-    local _let_21_ = {(err.lineNo - 1), (err.x - 1)}
-    local lnum = _let_21_[1]
-    local col = _let_21_[2]
+    local _let_27_ = {(err.lineNo - 1), (err.x - 1)}
+    local lnum = _let_27_[1]
+    local col = _let_27_[2]
     return vim.highlight.range(bufnr, ns, "Error", {lnum, col}, {lnum, (col + 1)}, "c")
   else
     return nil
   end
 end
 local function is_undo_leaf_3f()
-  local _let_23_ = vim.fn.undotree()
-  local seq_cur = _let_23_["seq_cur"]
-  local seq_last = _let_23_["seq_last"]
+  local _let_29_ = vim.fn.undotree()
+  local seq_cur = _let_29_["seq_cur"]
+  local seq_last = _let_29_["seq_last"]
   return (seq_cur == seq_last)
 end
 local function should_run_3f()
   return (get_option_2a("parinfer_enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b.changedtick ~= vim.b.parinfer_changedtick) and is_undo_leaf_3f())
 end
 local elapsed_times
-local function _24_(t, k)
+local function _30_(t, k)
   t[k] = {}
   return rawget(t, k)
 end
-elapsed_times = setmetatable({}, {__index = _24_})
+elapsed_times = setmetatable({}, {__index = _30_})
 local function process_buffer()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
     local start = vim.loop.hrtime()
     local winnr = api.nvim_get_current_win()
     local bufnr = api.nvim_get_current_buf()
-    local _let_25_ = api.nvim_win_get_cursor(winnr)
-    local lnum = _let_25_[1]
-    local col = _let_25_[2]
+    local _let_31_ = api.nvim_win_get_cursor(winnr)
+    local lnum = _let_31_[1]
+    local col = _let_31_[2]
     local orig_lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
     local response = invoke_parinfer(text, lnum, col)
-    local _let_26_ = response
-    local new_lnum = _let_26_["cursorLine"]
-    local new_col = _let_26_["cursorX"]
+    local _let_32_ = response
+    local new_lnum = _let_32_["cursorLine"]
+    local new_col = _let_32_["cursorX"]
     vim.b.parinfer_tabstops = response.tabStops
     vim.b.parinfer_prev_cursor = {new_lnum, new_col}
     if (response.text ~= text) then
       log("change-response", response)
       local lines = vim.split(response.text, "\n")
-      local function _27_()
+      local function _33_()
         update_buffer(bufnr, lines)
         return api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
-      vim.schedule(_27_)
+      vim.schedule(_33_)
     else
     end
     highlight_error(bufnr, response.error)

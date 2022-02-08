@@ -89,7 +89,9 @@
                   :prevCursorX prev-col
                   :cursorLine lnum
                   :cursorX (+ col 1)
-                  :forceBalance (get-option :force_balance)}]
+                  :forceBalance (match (get-option :force_balance)
+                                  (where n (= (type n) :boolean)) n
+                                  n (not= n 0))}]
     (log "request" request)
     ((. modes (get-option :mode)) text request)))
 
