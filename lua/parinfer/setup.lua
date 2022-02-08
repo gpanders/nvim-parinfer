@@ -5,6 +5,22 @@ do
   modes = {indent = parinfer.indentMode, paren = parinfer.parenMode, smart = parinfer.smartMode}
 end
 local ns = api.nvim_create_namespace("parinfer")
+local function true_3f(val)
+  local _1_ = val
+  local function _2_()
+    local n = _1_
+    return (type(n) == "boolean")
+  end
+  if ((nil ~= _1_) and _2_()) then
+    local n = _1_
+    return n
+  elseif (nil ~= _1_) then
+    local n = _1_
+    return (n ~= 0)
+  else
+    return nil
+  end
+end
 local function log(tag, data)
   if vim.g.parinfer_logfile then
     local f = io.open(vim.g.parinfer_logfile, "a")
@@ -16,20 +32,20 @@ local function log(tag, data)
         return error(..., 0)
       end
     end
-    local function _2_()
+    local function _5_()
       return f:write(("%s: %s\n"):format(tag, vim.fn.json_encode(data)))
     end
-    return close_handlers_8_auto(_G.xpcall(_2_, (package.loaded.fennel or debug).traceback))
+    return close_handlers_8_auto(_G.xpcall(_5_, (package.loaded.fennel or debug).traceback))
   else
     return nil
   end
 end
 local function get_option_2a(opt)
-  local _4_ = vim.b[opt]
-  if (nil ~= _4_) then
-    local v = _4_
+  local _7_ = vim.b[opt]
+  if (nil ~= _7_) then
+    local v = _7_
     return v
-  elseif (_4_ == nil) then
+  elseif (_7_ == nil) then
     return vim.g[opt]
   else
     return nil
@@ -40,14 +56,14 @@ local function expand_tab_stops(tabstops)
     local xs = {}
     for _, stop in ipairs(tabstops) do
       table.insert(xs, (stop.x - 1))
-      local function _6_()
+      local function _9_()
         if (stop.ch == "(") then
           return (stop.x + 1)
         else
           return stop.x
         end
       end
-      table.insert(xs, _6_())
+      table.insert(xs, _9_())
       if stop.argX then
         table.insert(xs, (stop.argX - 1))
       else
@@ -84,17 +100,17 @@ local function next_stop(stops, col, forward)
 end
 local function tab(forward)
   local stops = expand_tab_stops(vim.b.parinfer_tabstops)
-  local _let_13_ = api.nvim_win_get_cursor(0)
-  local lnum = _let_13_[1]
-  local col = _let_13_[2]
+  local _let_16_ = api.nvim_win_get_cursor(0)
+  local lnum = _let_16_[1]
+  local col = _let_16_[2]
   local line = (api.nvim_buf_get_lines(0, (lnum - 1), lnum, true))[1]
   local indent
   do
-    local _14_ = line:match("^%s+")
-    if (nil ~= _14_) then
-      local s = _14_
+    local _17_ = line:match("^%s+")
+    if (nil ~= _17_) then
+      local s = _17_
       indent = #s
-    elseif (_14_ == nil) then
+    elseif (_17_ == nil) then
       indent = 0
     else
       indent = nil
@@ -106,14 +122,14 @@ local function tab(forward)
   else
   end
   if not next_x then
-    local function _17_()
+    local function _20_()
       if forward then
         return 2
       else
         return -2
       end
     end
-    next_x = math.max(0, (col + _17_()))
+    next_x = math.max(0, (col + _20_()))
   else
   end
   do
@@ -127,28 +143,10 @@ local function tab(forward)
   return api.nvim_win_set_cursor(0, {lnum, next_x})
 end
 local function invoke_parinfer(text, lnum, col)
-  local _let_20_ = (vim.b.parinfer_prev_cursor or {})
-  local prev_lnum = _let_20_[1]
-  local prev_col = _let_20_[2]
-  local request
-  local _22_
-  do
-    local _21_ = get_option_2a("parinfer_force_balance")
-    local function _23_()
-      local n = _21_
-      return (type(n) == "boolean")
-    end
-    if ((nil ~= _21_) and _23_()) then
-      local n = _21_
-      _22_ = n
-    elseif (nil ~= _21_) then
-      local n = _21_
-      _22_ = (n ~= 0)
-    else
-      _22_ = nil
-    end
-  end
-  request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), forceBalance = _22_}
+  local _let_23_ = (vim.b.parinfer_prev_cursor or {})
+  local prev_lnum = _let_23_[1]
+  local prev_col = _let_23_[2]
+  local request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), forceBalance = true_3f(get_option_2a("parinfer_force_balance"))}
   log("request", request)
   return modes[get_option_2a("parinfer_mode")](text, request)
 end
@@ -159,54 +157,54 @@ end
 local function highlight_error(bufnr, err)
   api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   if err then
-    local _let_27_ = {(err.lineNo - 1), (err.x - 1)}
-    local lnum = _let_27_[1]
-    local col = _let_27_[2]
+    local _let_24_ = {(err.lineNo - 1), (err.x - 1)}
+    local lnum = _let_24_[1]
+    local col = _let_24_[2]
     return vim.highlight.range(bufnr, ns, "Error", {lnum, col}, {lnum, (col + 1)}, "c")
   else
     return nil
   end
 end
 local function is_undo_leaf_3f()
-  local _let_29_ = vim.fn.undotree()
-  local seq_cur = _let_29_["seq_cur"]
-  local seq_last = _let_29_["seq_last"]
+  local _let_26_ = vim.fn.undotree()
+  local seq_cur = _let_26_["seq_cur"]
+  local seq_last = _let_26_["seq_last"]
   return (seq_cur == seq_last)
 end
 local function should_run_3f()
-  return (get_option_2a("parinfer_enabled") and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b.changedtick ~= vim.b.parinfer_changedtick) and is_undo_leaf_3f())
+  return (true_3f(get_option_2a("parinfer_enabled")) and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b.changedtick ~= vim.b.parinfer_changedtick) and is_undo_leaf_3f())
 end
 local elapsed_times
-local function _30_(t, k)
+local function _27_(t, k)
   t[k] = {}
   return rawget(t, k)
 end
-elapsed_times = setmetatable({}, {__index = _30_})
+elapsed_times = setmetatable({}, {__index = _27_})
 local function process_buffer()
   if should_run_3f() then
     vim.b.parinfer_changedtick = vim.b.changedtick
     local start = vim.loop.hrtime()
     local winnr = api.nvim_get_current_win()
     local bufnr = api.nvim_get_current_buf()
-    local _let_31_ = api.nvim_win_get_cursor(winnr)
-    local lnum = _let_31_[1]
-    local col = _let_31_[2]
+    local _let_28_ = api.nvim_win_get_cursor(winnr)
+    local lnum = _let_28_[1]
+    local col = _let_28_[2]
     local orig_lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(orig_lines, "\n")
     local response = invoke_parinfer(text, lnum, col)
-    local _let_32_ = response
-    local new_lnum = _let_32_["cursorLine"]
-    local new_col = _let_32_["cursorX"]
+    local _let_29_ = response
+    local new_lnum = _let_29_["cursorLine"]
+    local new_col = _let_29_["cursorX"]
     vim.b.parinfer_tabstops = response.tabStops
     vim.b.parinfer_prev_cursor = {new_lnum, new_col}
     if (response.text ~= text) then
       log("change-response", response)
       local lines = vim.split(response.text, "\n")
-      local function _33_()
+      local function _30_()
         update_buffer(bufnr, lines)
         return api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
-      vim.schedule(_33_)
+      vim.schedule(_30_)
     else
     end
     highlight_error(bufnr, response.error)

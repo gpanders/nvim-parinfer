@@ -27,6 +27,11 @@
 
 (local ns (api.nvim_create_namespace :parinfer))
 
+(fn true? [val]
+  (match val
+    (where n (= (type n) :boolean)) n
+    n (not= n 0)))
+
 (fn log [tag data]
   "Log a message to the log file."
   (when vim.g.parinfer_logfile
@@ -89,9 +94,7 @@
                   :prevCursorX prev-col
                   :cursorLine lnum
                   :cursorX (+ col 1)
-                  :forceBalance (match (get-option :force_balance)
-                                  (where n (= (type n) :boolean)) n
-                                  n (not= n 0))}]
+                  :forceBalance (true? (get-option :force_balance))}]
     (log "request" request)
     ((. modes (get-option :mode)) text request)))
 
@@ -110,7 +113,7 @@
     (= seq_cur seq_last)))
 
 (fn should-run? []
-  (and (get-option :enabled)
+  (and (true? (get-option :enabled))
        (not vim.o.paste)
        (not vim.bo.readonly)
        vim.bo.modifiable
