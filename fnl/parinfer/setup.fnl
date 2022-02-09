@@ -109,7 +109,9 @@
 
 (fn update-buffer [bufnr lines]
   (api.nvim_command "silent! undojoin")
-  (api.nvim_buf_set_lines bufnr 0 -1 true lines))
+  (tset state bufnr :locked true)
+  (api.nvim_buf_set_lines bufnr 0 -1 true lines)
+  (vim.schedule #(tset state bufnr :locked false)))
 
 (fn highlight-error [bufnr err]
   (api.nvim_buf_clear_namespace bufnr ns 0 -1)
@@ -123,6 +125,7 @@
 
 (fn should-run? [bufnr]
   (and (true? (get-option :enabled))
+       (not (. state bufnr :locked))
        (not vim.o.paste)
        (not vim.bo.readonly)
        vim.bo.modifiable
@@ -172,7 +175,7 @@
     out))
 
 (fn on-bytes [_ bufnr _ start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
-  (when (true? (get-option :enabled))
+  (when (and (true? (get-option :enabled)) (not (. state bufnr :locked)))
     (let [{: prev-contents} (. state bufnr)]
       ; If start row is greater than the length of prev-contents that means we
       ; are adding a new line to the end of the buffer, so there are no

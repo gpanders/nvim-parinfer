@@ -162,58 +162,64 @@ local function invoke_parinfer(bufnr, text, lnum, col)
 end
 local function update_buffer(bufnr, lines)
   api.nvim_command("silent! undojoin")
-  return api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+  do end (state)[bufnr]["locked"] = true
+  api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+  local function _25_()
+    state[bufnr]["locked"] = false
+    return nil
+  end
+  return vim.schedule(_25_)
 end
 local function highlight_error(bufnr, err)
   api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   if err then
-    local _let_25_ = {(err.lineNo - 1), (err.x - 1)}
-    local lnum = _let_25_[1]
-    local col = _let_25_[2]
+    local _let_26_ = {(err.lineNo - 1), (err.x - 1)}
+    local lnum = _let_26_[1]
+    local col = _let_26_[2]
     return vim.highlight.range(bufnr, ns, "Error", {lnum, col}, {lnum, (col + 1)}, "c")
   else
     return nil
   end
 end
 local function is_undo_leaf_3f()
-  local _let_27_ = vim.fn.undotree()
-  local seq_cur = _let_27_["seq_cur"]
-  local seq_last = _let_27_["seq_last"]
+  local _let_28_ = vim.fn.undotree()
+  local seq_cur = _let_28_["seq_cur"]
+  local seq_last = _let_28_["seq_last"]
   return (seq_cur == seq_last)
 end
 local function should_run_3f(bufnr)
-  return (true_3f(get_option_2a("parinfer_enabled")) and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b[bufnr].changedtick ~= state[bufnr].changedtick) and is_undo_leaf_3f())
+  return (true_3f(get_option_2a("parinfer_enabled")) and not state[bufnr].locked and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b[bufnr].changedtick ~= state[bufnr].changedtick) and is_undo_leaf_3f())
 end
 local elapsed_times
-local function _28_(t, k)
+local function _29_(t, k)
   t[k] = {}
   return rawget(t, k)
 end
-elapsed_times = setmetatable({}, {__index = _28_})
+elapsed_times = setmetatable({}, {__index = _29_})
 local function process_buffer(bufnr)
   if should_run_3f(bufnr) then
     local start = vim.loop.hrtime()
     local winnr = api.nvim_get_current_win()
-    local _let_29_ = api.nvim_win_get_cursor(winnr)
-    local lnum = _let_29_[1]
-    local col = _let_29_[2]
+    local _let_30_ = api.nvim_win_get_cursor(winnr)
+    local lnum = _let_30_[1]
+    local col = _let_30_[2]
     local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(contents, "\n")
     local response = invoke_parinfer(bufnr, text, lnum, col)
-    local _let_30_ = response
-    local new_lnum = _let_30_["cursorLine"]
-    local new_col = _let_30_["cursorX"]
+    local _let_31_ = response
+    local new_lnum = _let_31_["cursorLine"]
+    local new_col = _let_31_["cursorX"]
     state[bufnr]["changedtick"] = vim.b[bufnr].changedtick
     state[bufnr]["tabstops"] = response.tabStops
     state[bufnr]["prev-cursor"] = {new_lnum, new_col}
     if (response.text ~= text) then
       log("change-response", response)
       local lines = vim.split(response.text, "\n")
-      local function _31_()
+      local function _32_()
         update_buffer(bufnr, lines)
         return api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
-      vim.schedule(_31_)
+      vim.schedule(_32_)
     else
     end
     highlight_error(bufnr, response.error)
@@ -232,14 +238,14 @@ local function slice(lines, start_row, start_col, end_row, end_col)
   local end_row0 = (end_row + 1)
   local end_col0 = (end_col + 1)
   local first_line
-  local function _35_()
+  local function _36_()
     if (start_row0 == end_row0) then
       return end_col0
     else
       return -1
     end
   end
-  first_line = string.sub(lines[start_row0], start_col0, _35_())
+  first_line = string.sub(lines[start_row0], start_col0, _36_())
   local out = {first_line}
   for i = (start_row0 + 1), (end_row0 - 1) do
     local line = lines[i]
@@ -252,9 +258,9 @@ local function slice(lines, start_row, start_col, end_row, end_col)
   return out
 end
 local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old_end_col, _2, new_end_row, new_end_col)
-  if true_3f(get_option_2a("parinfer_enabled")) then
-    local _let_37_ = state[bufnr]
-    local prev_contents = _let_37_["prev-contents"]
+  if (true_3f(get_option_2a("parinfer_enabled")) and not state[bufnr].locked) then
+    local _let_38_ = state[bufnr]
+    local prev_contents = _let_38_["prev-contents"]
     if (start_row < #prev_contents) then
       local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       local old_end_row0
