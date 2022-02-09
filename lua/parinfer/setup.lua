@@ -240,7 +240,7 @@ local function slice(lines, start_row, start_col, end_row, end_col)
   local first_line
   local function _36_()
     if (start_row0 == end_row0) then
-      return end_col0
+      return (end_col0 - 1)
     else
       return -1
     end
@@ -251,7 +251,7 @@ local function slice(lines, start_row, start_col, end_row, end_col)
     local line = lines[i]
     table.insert(out, line)
   end
-  if (start_row0 ~= end_row0) then
+  if ((start_row0 ~= end_row0) and (1 < end_col0)) then
     table.insert(out, string.sub(lines[end_row0], 1, end_col0))
   else
   end
@@ -263,23 +263,18 @@ local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old
     local prev_contents = _let_38_["prev-contents"]
     if (start_row < #prev_contents) then
       local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
-      local old_end_row0
-      if (0 == old_end_row) then
-        old_end_row0 = start_row
-      else
-        old_end_row0 = (start_row + (old_end_row - 1))
-      end
-      local new_end_row0
-      if (0 == new_end_row) then
-        new_end_row0 = start_row
-      else
-        new_end_row0 = (start_row + (new_end_row - 1))
-      end
+      local old_end_row0 = (start_row + old_end_row)
+      local new_end_row0 = (start_row + new_end_row)
       local old_end_col0 = (start_col + old_end_col)
       local new_end_col0 = (start_col + new_end_col)
       local old_text = slice(prev_contents, start_row, start_col, old_end_row0, old_end_col0)
-      local new_text = slice(contents, start_row, start_col, new_end_row0, new_end_col0)
-      do end (state)[bufnr]["prev-contents"] = contents
+      local new_text
+      if (start_row < #contents) then
+        new_text = slice(contents, start_row, start_col, new_end_row0, new_end_col0)
+      else
+        new_text = {""}
+      end
+      state[bufnr]["prev-contents"] = contents
       state[bufnr]["changes"] = {{oldText = table.concat(old_text, "\n"), newText = table.concat(new_text, "\n"), lineNo = (start_row + 1), x = (start_col + 1)}}
       return nil
     else

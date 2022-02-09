@@ -165,12 +165,12 @@
         start-col (+ start-col 1)
         end-row (+ end-row 1)
         end-col (+ end-col 1)
-        first-line (string.sub (. lines start-row) start-col (if (= start-row end-row) end-col -1))
+        first-line (string.sub (. lines start-row) start-col (if (= start-row end-row) (- end-col 1) -1))
         out [first-line]]
     (for [i (+ start-row 1) (- end-row 1)]
       (let [line (. lines i)]
         (table.insert out line)))
-    (when (not= start-row end-row)
+    (when (and (not= start-row end-row) (< 1 end-col))
       (table.insert out (string.sub (. lines end-row) 1 end-col)))
     out))
 
@@ -182,12 +182,18 @@
       ; "changes"
       (when (< start-row (length prev-contents))
         (let [contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
-              old-end-row (if (= 0 old-end-row) start-row (+ start-row (- old-end-row 1)))
-              new-end-row (if (= 0 new-end-row) start-row (+ start-row (- new-end-row 1)))
+              old-end-row (+ start-row old-end-row)
+              new-end-row (+ start-row new-end-row)
               old-end-col (+ start-col old-end-col)
               new-end-col (+ start-col new-end-col)
               old-text (slice prev-contents start-row start-col old-end-row old-end-col)
-              new-text (slice contents start-row start-col new-end-row new-end-col)]
+              new-text (if (< start-row (length contents))
+                           (slice contents start-row start-col new-end-row new-end-col)
+                           ; If start row is greater than the length of
+                           ; contents that means we are deleting a line from
+                           ; the end of the buffer, so the new text is just an
+                           ; empty string
+                           [""])]
           (tset state bufnr :prev-contents contents)
           (tset state bufnr :changes [{:oldText (table.concat old-text "\n")
                                        :newText (table.concat new-text "\n")
