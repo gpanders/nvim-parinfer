@@ -170,7 +170,7 @@
     (for [i (+ start-row 1) (- end-row 1)]
       (let [line (. lines i)]
         (table.insert out line)))
-    (when (and (not= start-row end-row) (< 1 end-col))
+    (when (and (not= start-row end-row) (< 1 end-col) (. lines end-row))
       (table.insert out (string.sub (. lines end-row) 1 end-col)))
     out))
 
