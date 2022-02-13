@@ -171,7 +171,7 @@
       (let [line (. lines i)]
         (table.insert out line)))
     (when (and (not= start-row end-row) (< 1 end-col) (. lines end-row))
-      (table.insert out (string.sub (. lines end-row) 1 end-col)))
+      (table.insert out (string.sub (. lines end-row) 1 (- end-col 1))))
     out))
 
 (fn on-bytes [_ bufnr _ start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
