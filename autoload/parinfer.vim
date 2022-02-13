@@ -35,7 +35,8 @@ function! parinfer#init() abort
     lua parinfer.enter_buffer()
 
     augroup parinfer
-        autocmd! TextChanged,TextChangedI,TextChangedP <buffer> call v:lua.parinfer.process_buffer(+expand("<abuf>"))
+        autocmd! TextChanged,TextChangedI,TextChangedP <buffer> call v:lua.parinfer.text_changed(+expand("<abuf>"))
+        autocmd! CursorMoved,CursorMovedI <buffer> call v:lua.parinfer.cursor_moved(+expand("<abuf>"))
     augroup END
 
     if !get(b:, 'parinfer_no_maps', get(g:, 'parinfer_no_maps', 0))
