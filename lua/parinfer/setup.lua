@@ -252,7 +252,7 @@ local function slice(lines, start_row, start_col, end_row, end_col)
     table.insert(out, line)
   end
   if ((start_row0 ~= end_row0) and (1 < end_col0) and lines[end_row0]) then
-    table.insert(out, string.sub(lines[end_row0], 1, end_col0))
+    table.insert(out, string.sub(lines[end_row0], 1, (end_col0 - 1)))
   else
   end
   return out
