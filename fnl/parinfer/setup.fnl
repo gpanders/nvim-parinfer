@@ -211,6 +211,13 @@
       (process-buffer bufnr)
       (set vim.g.parinfer_mode mode))))
 
+(fn cursor-moved [bufnr]
+  (vim.schedule #(let [[lnum col] (vim.api.nvim_win_get_cursor 0)]
+                   (tset state bufnr :prev-cursor [lnum (+ col 1)]))))
+
+(fn text-changed [bufnr]
+  (process-buffer bufnr))
+
 (fn stats []
   (let [bufnr (api.nvim_get_current_buf)
         times (. elapsed-times bufnr)
@@ -236,6 +243,7 @@
                 (/ min 1000000) (/ max 1000000) (/ avg 1000000) (/ std 1000000))))))
 
 (global parinfer {:enter_buffer enter-buffer
-                  :process_buffer process-buffer
+                  :cursor_moved cursor-moved
+                  :text_changed text-changed
                   : stats
                   : tab})

@@ -296,6 +296,19 @@ local function enter_buffer()
   vim.g.parinfer_mode = mode
   return nil
 end
+local function cursor_moved(bufnr)
+  local function _42_()
+    local _let_43_ = vim.api.nvim_win_get_cursor(0)
+    local lnum = _let_43_[1]
+    local col = _let_43_[2]
+    state[bufnr]["prev-cursor"] = {lnum, (col + 1)}
+    return nil
+  end
+  return vim.schedule(_42_)
+end
+local function text_changed(bufnr)
+  return process_buffer(bufnr)
+end
 local function stats()
   local bufnr = api.nvim_get_current_buf()
   local times = elapsed_times[bufnr]
@@ -325,5 +338,5 @@ local function stats()
     return nil
   end
 end
-parinfer = {enter_buffer = enter_buffer, process_buffer = process_buffer, stats = stats, tab = tab}
+parinfer = {enter_buffer = enter_buffer, cursor_moved = cursor_moved, text_changed = text_changed, stats = stats, tab = tab}
 return nil
