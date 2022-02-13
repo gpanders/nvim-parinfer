@@ -157,7 +157,7 @@ local function invoke_parinfer(bufnr, text, lnum, col)
   local request = {commentChars = get_option_2a("parinfer_comment_chars"), prevCursorLine = prev_lnum, prevCursorX = prev_col, cursorLine = lnum, cursorX = (col + 1), changes = changes, forceBalance = true_3f(get_option_2a("parinfer_force_balance"))}
   local response = modes[get_option_2a("parinfer_mode")](text, request)
   log("request", request)
-  do end (state)[bufnr]["changes"] = nil
+  do end (state)[bufnr]["changes"] = {}
   return response
 end
 local function update_buffer(bufnr, lines)
@@ -235,48 +235,52 @@ end
 local function slice(lines, start_row, start_col, end_row, end_col)
   local start_row0 = (start_row + 1)
   local start_col0 = (start_col + 1)
-  local end_row0 = (end_row + 1)
-  local end_col0 = (end_col + 1)
   local first_line
   local function _36_()
-    if (start_row0 == end_row0) then
-      return (end_col0 - 1)
+    if (0 == end_row) then
+      return ((start_col0 + end_col) - 1)
     else
       return -1
     end
   end
   first_line = string.sub(lines[start_row0], start_col0, _36_())
   local out = {first_line}
-  for i = (start_row0 + 1), (end_row0 - 1) do
+  for i = (start_row0 + 1), ((start_row0 + end_row) - 1) do
     local line = lines[i]
     table.insert(out, line)
   end
-  if ((start_row0 ~= end_row0) and (1 < end_col0) and lines[end_row0]) then
-    table.insert(out, string.sub(lines[end_row0], 1, (end_col0 - 1)))
+  if (0 ~= end_row) then
+    local function _37_()
+      if ((0 < end_col) and lines[(start_row0 + end_row)]) then
+        return string.sub(lines[(start_row0 + end_row)], 1, end_col)
+      else
+        return ""
+      end
+    end
+    table.insert(out, _37_())
   else
   end
   return out
 end
 local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old_end_col, _2, new_end_row, new_end_col)
   if (true_3f(get_option_2a("parinfer_enabled")) and not state[bufnr].locked) then
-    local _let_38_ = state[bufnr]
-    local prev_contents = _let_38_["prev-contents"]
+    local _let_39_ = state[bufnr]
+    local prev_contents = _let_39_["prev-contents"]
     if (start_row < #prev_contents) then
       local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
-      local old_end_row0 = (start_row + old_end_row)
-      local new_end_row0 = (start_row + new_end_row)
-      local old_end_col0 = (start_col + old_end_col)
-      local new_end_col0 = (start_col + new_end_col)
-      local old_text = slice(prev_contents, start_row, start_col, old_end_row0, old_end_col0)
+      local old_text = slice(prev_contents, start_row, start_col, old_end_row, old_end_col)
       local new_text
       if (start_row < #contents) then
-        new_text = slice(contents, start_row, start_col, new_end_row0, new_end_col0)
+        new_text = slice(contents, start_row, start_col, new_end_row, new_end_col)
       else
         new_text = {""}
       end
       state[bufnr]["prev-contents"] = contents
-      state[bufnr]["changes"] = {{oldText = table.concat(old_text, "\n"), newText = table.concat(new_text, "\n"), lineNo = (start_row + 1), x = (start_col + 1)}}
-      return nil
+      if not state[bufnr].changes then
+        state[bufnr]["changes"] = {}
+      else
+      end
+      return table.insert(state[bufnr].changes, {oldText = table.concat(old_text, "\n"), newText = table.concat(new_text, "\n"), lineNo = (start_row + 1), x = (start_col + 1)})
     else
       return nil
     end
@@ -297,14 +301,14 @@ local function enter_buffer()
   return nil
 end
 local function cursor_moved(bufnr)
-  local function _42_()
-    local _let_43_ = vim.api.nvim_win_get_cursor(0)
-    local lnum = _let_43_[1]
-    local col = _let_43_[2]
+  local function _44_()
+    local _let_45_ = vim.api.nvim_win_get_cursor(0)
+    local lnum = _let_45_[1]
+    local col = _let_45_[2]
     state[bufnr]["prev-cursor"] = {lnum, (col + 1)}
     return nil
   end
-  return vim.schedule(_42_)
+  return vim.schedule(_44_)
 end
 local function text_changed(bufnr)
   return process_buffer(bufnr)
