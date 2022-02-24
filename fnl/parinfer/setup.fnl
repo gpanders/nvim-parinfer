@@ -160,17 +160,21 @@
         (log "error-response" response))
       (table.insert (. elapsed-times bufnr) (- (vim.loop.hrtime) start)))))
 
-(fn slice [lines start-row start-col end-row end-col]
+(fn slice [lines start-row start-col row-offset col-offset]
+  "Return the range from lines between (start-row, start-col) and
+  (start-row + row-offset, start-col + col-offset)."
   (let [start-row (+ start-row 1)
         start-col (+ start-col 1)
-        first-line (string.sub (. lines start-row) start-col (if (= 0 end-row) (- (+ start-col end-col) 1) -1))
+        first-line (string.sub (. lines start-row) start-col (if (= 0 row-offset) (- (+ start-col col-offset) 1) -1))
         out [first-line]]
-    (for [i (+ start-row 1) (- (+ start-row end-row) 1)]
+    (for [i (+ start-row 1) (- (+ start-row row-offset) 1)]
       (let [line (. lines i)]
         (table.insert out line)))
-    (when (not= 0 end-row)
-      (table.insert out (if (and (< 0 end-col) (. lines (+ start-row end-row)))
-                            (string.sub (. lines (+ start-row end-row)) 1 end-col)
+    (when (not= 0 row-offset)
+      (table.insert out (if (and (< 0 col-offset) (. lines (+ start-row row-offset)))
+                            (string.sub (. lines (+ start-row row-offset)) 1 col-offset)
+                            ; If col-offset is zero then the last row in the
+                            ; range is just an empty string
                             "")))
     out))
 

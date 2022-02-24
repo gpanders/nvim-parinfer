@@ -232,27 +232,27 @@ local function process_buffer(bufnr)
     return nil
   end
 end
-local function slice(lines, start_row, start_col, end_row, end_col)
+local function slice(lines, start_row, start_col, row_offset, col_offset)
   local start_row0 = (start_row + 1)
   local start_col0 = (start_col + 1)
   local first_line
   local function _36_()
-    if (0 == end_row) then
-      return ((start_col0 + end_col) - 1)
+    if (0 == row_offset) then
+      return ((start_col0 + col_offset) - 1)
     else
       return -1
     end
   end
   first_line = string.sub(lines[start_row0], start_col0, _36_())
   local out = {first_line}
-  for i = (start_row0 + 1), ((start_row0 + end_row) - 1) do
+  for i = (start_row0 + 1), ((start_row0 + row_offset) - 1) do
     local line = lines[i]
     table.insert(out, line)
   end
-  if (0 ~= end_row) then
+  if (0 ~= row_offset) then
     local function _37_()
-      if ((0 < end_col) and lines[(start_row0 + end_row)]) then
-        return string.sub(lines[(start_row0 + end_row)], 1, end_col)
+      if ((0 < col_offset) and lines[(start_row0 + row_offset)]) then
+        return string.sub(lines[(start_row0 + row_offset)], 1, col_offset)
       else
         return ""
       end
