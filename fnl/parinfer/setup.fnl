@@ -176,13 +176,13 @@
 
 (fn on-bytes [_ bufnr _ start-row start-col _ old-end-row old-end-col _ new-end-row new-end-col]
   (when (and (true? (get-option :enabled)) (not (. state bufnr :locked)))
-    (let [{: prev-contents} (. state bufnr)]
+    (let [{: prev-contents} (. state bufnr)
+          contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)]
       ; If start row is greater than the length of prev-contents that means we
       ; are adding a new line to the end of the buffer, so there are no
       ; "changes"
       (when (< start-row (length prev-contents))
-        (let [contents (vim.api.nvim_buf_get_lines bufnr 0 -1 true)
-              old-text (slice prev-contents start-row start-col old-end-row old-end-col)
+        (let [old-text (slice prev-contents start-row start-col old-end-row old-end-col)
               new-text (if (< start-row (length contents))
                            (slice contents start-row start-col new-end-row new-end-col)
                            ; If start row is greater than the length of
@@ -190,13 +190,13 @@
                            ; the end of the buffer, so the new text is just an
                            ; empty string
                            [""])]
-          (tset state bufnr :prev-contents contents)
           (when (not (. state bufnr :changes))
             (tset state bufnr :changes []))
           (table.insert (. state bufnr :changes) {:oldText (table.concat old-text "\n")
                                                   :newText (table.concat new-text "\n")
                                                   :lineNo (+ start-row 1)
-                                                  :x (+ start-col 1)}))))))
+                                                  :x (+ start-col 1)})))
+      (tset state bufnr :prev-contents contents))))
 
 (fn enter-buffer []
   (let [bufnr (vim.api.nvim_get_current_buf)

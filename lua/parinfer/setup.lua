@@ -266,8 +266,8 @@ local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old
   if (true_3f(get_option_2a("parinfer_enabled")) and not state[bufnr].locked) then
     local _let_39_ = state[bufnr]
     local prev_contents = _let_39_["prev-contents"]
+    local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     if (start_row < #prev_contents) then
-      local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       local old_text = slice(prev_contents, start_row, start_col, old_end_row, old_end_col)
       local new_text
       if (start_row < #contents) then
@@ -275,15 +275,15 @@ local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old
       else
         new_text = {""}
       end
-      state[bufnr]["prev-contents"] = contents
       if not state[bufnr].changes then
         state[bufnr]["changes"] = {}
       else
       end
-      return table.insert(state[bufnr].changes, {oldText = table.concat(old_text, "\n"), newText = table.concat(new_text, "\n"), lineNo = (start_row + 1), x = (start_col + 1)})
+      table.insert(state[bufnr].changes, {oldText = table.concat(old_text, "\n"), newText = table.concat(new_text, "\n"), lineNo = (start_row + 1), x = (start_col + 1)})
     else
-      return nil
     end
+    state[bufnr]["prev-contents"] = contents
+    return nil
   else
     return nil
   end
