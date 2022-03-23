@@ -39,7 +39,7 @@ below for user commands and configuration options.
 ==============================================================================
 OPTIONS						   *parinfer-options*
 
-All of the configuration options below can be used globally (|g:|) or
+Most of the configuration options below can be used globally (|g:|) or
 per-buffer (|b:|).
 
 					   *g:parinfer_mode* *b:parinfer_mode*
@@ -60,6 +60,10 @@ List of characters that represent comments. Defaults to `[';']`.
 
 				*g:parinfer_no_maps* *b:parinfer_no_maps*
 Set to |TRUE| to disable automatic maps |parinfer-maps|.
+
+							*g:parinfer_filetypes*
+A list of filetypes in which to enable parinfer. Defaults to ["clojure",
+"scheme", "lisp", "racket", "hy", "fennel", "janet", "carp", "wast", "yuck"].
 
 ==============================================================================
 MAPS					   	*parinfer-maps*

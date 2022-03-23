@@ -36,6 +36,10 @@ if !exists('g:parinfer_comment_chars')
   let g:parinfer_comment_chars = [';']
 endif
 
+if !exists('g:parinfer_filetypes')
+  let g:parinfer_filetypes = ['clojure', 'scheme', 'lisp', 'racket', 'hy', 'fennel', 'janet', 'carp', 'wast', 'yuck']
+endif
+
 command! -bang ParinferOn call parinfer#enable(<bang>0, 1)
 command! -bang ParinferOff call parinfer#enable(<bang>0, 0)
 command! -bang ParinferToggle call parinfer#toggle(<bang>0)
@@ -44,7 +48,7 @@ command! -nargs=? ParinferLog call parinfer#log(<f-args>)
 augroup parinfer
     autocmd!
     autocmd FileType janet let b:parinfer_comment_chars = ['#']
-    autocmd FileType clojure,scheme,lisp,racket,hy,fennel,janet,carp,wast,yuck,query call parinfer#init()
+    autocmd FileType * if index(g:parinfer_filetypes, &filetype) != -1 | call parinfer#init() | endif
 augroup END
 
 inoremap <Plug>(parinfer-tab) <Cmd>lua parinfer.tab(true)<CR>
