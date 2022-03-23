@@ -16,13 +16,16 @@ whenever the cursor is moved or when the content of the buffer changes. See
 below for user commands and configuration options.
 
 							   *:ParinferOn*
-:ParinferOn 		Enable parinfer in the current buffer.
+:ParinferOn[!] 		Enable parinfer in the current buffer. With [!],
+			enable parinfer globally.
 
 							   *:ParinferOff*
-:ParinferOff 		Disable parinfer in the current buffer.
+:ParinferOff[!]		Disable parinfer in the current buffer. With [!],
+			disable parinfer globally.
 
 							   *:ParinferToggle*
-:ParinferToggle 	Toggle parinfer in the current buffer.
+:ParinferToggle[!] 	Toggle parinfer in the current buffer. With [!],
+			toggle parinfer globally.
 
 							   *:ParinferLog*
 :ParinferLog {file} 	Log parinfer output to {file}.

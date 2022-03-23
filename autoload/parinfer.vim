@@ -25,6 +25,24 @@ function! parinfer#log(...) abort
     endif
 endfunction
 
+function! parinfer#enable(bang, enable) abort
+    if a:bang
+        let g:parinfer_enabled = a:enable
+        echomsg 'Parinfer ' .. (a:enable ? 'enabled' : 'disabled') .. ' globally'
+    else
+        let b:parinfer_enabled = a:enable
+        echomsg 'Parinfer ' .. (a:enable ? 'enabled' : 'disabled') .. ' in the current buffer'
+    endif
+endfunction
+
+function! parinfer#toggle(bang) abort
+    if a:bang
+        call parinfer#enable(1, !g:parinfer_enabled)
+    else
+        call parinfer#enable(0, !b:parinfer_enabled)
+    endif
+endfunction
+
 function! parinfer#init() abort
     if &previewwindow || &buftype ==# 'prompt'
         return

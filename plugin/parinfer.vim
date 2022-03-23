@@ -36,9 +36,9 @@ if !exists('g:parinfer_comment_chars')
   let g:parinfer_comment_chars = [';']
 endif
 
-command! ParinferOn let g:parinfer_enabled = v:true
-command! ParinferOff let g:parinfer_enabled = v:false
-command! ParinferToggle let g:parinfer_enabled = !g:parinfer_enabled
+command! -bang ParinferOn call parinfer#enable(<bang>0, 1)
+command! -bang ParinferOff call parinfer#enable(<bang>0, 0)
+command! -bang ParinferToggle call parinfer#toggle(<bang>0)
 command! -nargs=? ParinferLog call parinfer#log(<f-args>)
 
 augroup parinfer
