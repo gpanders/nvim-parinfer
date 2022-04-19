@@ -11,6 +11,14 @@ simply install and go.
 [parinfer-rust]: https://github.com/eraserhd/parinfer-rust
 [parinfer-lua]: https://github.com/oakmac/parinfer-lua
 
+## Requirements
+
+Neovim 0.7 or later.
+
+[Version 1.2.0][v1.2.0] works for older versions of Neovim.
+
+[v1.2.0]: https://github.com/gpanders/nvim-parinfer/releases/tag/v1.2.0
+
 ## Configuration
 
 nvim-parinfer uses sane defaults that should "just work". You can see the
