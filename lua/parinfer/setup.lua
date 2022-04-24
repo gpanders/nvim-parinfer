@@ -342,5 +342,4 @@ local function stats()
     return nil
   end
 end
-parinfer = {enter_buffer = enter_buffer, cursor_moved = cursor_moved, text_changed = text_changed, stats = stats, tab = tab}
-return nil
+return {enter_buffer = enter_buffer, cursor_moved = cursor_moved, text_changed = text_changed, stats = stats, tab = tab}
