@@ -107,10 +107,16 @@
     (tset state bufnr :changes [])
     response))
 
-(fn update-buffer [bufnr lines]
+(fn update-buffer [bufnr old-contents new-contents]
   (api.nvim_command "silent! undojoin")
   (tset state bufnr :locked true)
-  (api.nvim_buf_set_lines bufnr 0 -1 true lines)
+  (let [new-lines (vim.split new-contents "\n")
+        hunks (vim.diff old-contents new-contents {:result_type :indices
+                                                   :algorithm :minimal})]
+    (each [_ [start-a count-a start-b count-b] (ipairs hunks)]
+      (let [lines (fcollect [i start-b (+ start-b count-b)]
+                    (. new-lines i))]
+        (api.nvim_buf_set_lines bufnr (- start-a 1) (+ start-a count-a) false lines))))
   (vim.schedule #(tset state bufnr :locked false)))
 
 (fn highlight-error [bufnr err]
@@ -151,10 +157,9 @@
       (tset state bufnr :prev-cursor [new-lnum new-col])
       (when (not= response.text text)
         (log "change-response" response)
-        (let [lines (vim.split response.text "\n")]
-          (vim.schedule #(do
-                           (update-buffer bufnr lines)
-                           (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)])))))
+        (vim.schedule #(do
+                         (update-buffer bufnr text response.text)
+                         (api.nvim_win_set_cursor winnr [new-lnum (- new-col 1)]))))
       (highlight-error bufnr response.error)
       (when response.error
         (log "error-response" response))

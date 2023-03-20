@@ -30,9 +30,9 @@ end
 local function log(tag, data)
   if vim.g.parinfer_logfile then
     local f = io.open(vim.g.parinfer_logfile, "a")
-    local function close_handlers_8_auto(ok_9_auto, ...)
+    local function close_handlers_10_auto(ok_11_auto, ...)
       f:close()
-      if ok_9_auto then
+      if ok_11_auto then
         return ...
       else
         return error(..., 0)
@@ -41,7 +41,7 @@ local function log(tag, data)
     local function _6_()
       return f:write(("%s: %s\n"):format(tag, vim.fn.json_encode(data)))
     end
-    return close_handlers_8_auto(_G.xpcall(_6_, (package.loaded.fennel or debug).traceback))
+    return close_handlers_10_auto(_G.xpcall(_6_, (package.loaded.fennel or debug).traceback))
   else
     return nil
   end
@@ -160,66 +160,90 @@ local function invoke_parinfer(bufnr, text, lnum, col)
   do end (state)[bufnr]["changes"] = {}
   return response
 end
-local function update_buffer(bufnr, lines)
+local function update_buffer(bufnr, old_contents, new_contents)
   api.nvim_command("silent! undojoin")
   do end (state)[bufnr]["locked"] = true
-  api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
-  local function _25_()
+  do
+    local new_lines = vim.split(new_contents, "\n")
+    local hunks = vim.diff(old_contents, new_contents, {result_type = "indices", algorithm = "minimal"})
+    for _, _25_ in ipairs(hunks) do
+      local _each_26_ = _25_
+      local start_a = _each_26_[1]
+      local count_a = _each_26_[2]
+      local start_b = _each_26_[3]
+      local count_b = _each_26_[4]
+      local lines
+      do
+        local tbl_17_auto = {}
+        local i_18_auto = #tbl_17_auto
+        for i = start_b, (start_b + count_b) do
+          local val_19_auto = new_lines[i]
+          if (nil ~= val_19_auto) then
+            i_18_auto = (i_18_auto + 1)
+            do end (tbl_17_auto)[i_18_auto] = val_19_auto
+          else
+          end
+        end
+        lines = tbl_17_auto
+      end
+      api.nvim_buf_set_lines(bufnr, (start_a - 1), (start_a + count_a), false, lines)
+    end
+  end
+  local function _28_()
     state[bufnr]["locked"] = false
     return nil
   end
-  return vim.schedule(_25_)
+  return vim.schedule(_28_)
 end
 local function highlight_error(bufnr, err)
   api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   if err then
-    local _let_26_ = {(err.lineNo - 1), (err.x - 1)}
-    local lnum = _let_26_[1]
-    local col = _let_26_[2]
+    local _let_29_ = {(err.lineNo - 1), (err.x - 1)}
+    local lnum = _let_29_[1]
+    local col = _let_29_[2]
     return vim.highlight.range(bufnr, ns, "Error", {lnum, col}, {lnum, (col + 1)}, "c")
   else
     return nil
   end
 end
 local function is_undo_leaf_3f()
-  local _let_28_ = vim.fn.undotree()
-  local seq_cur = _let_28_["seq_cur"]
-  local seq_last = _let_28_["seq_last"]
+  local _let_31_ = vim.fn.undotree()
+  local seq_cur = _let_31_["seq_cur"]
+  local seq_last = _let_31_["seq_last"]
   return (seq_cur == seq_last)
 end
 local function should_run_3f(bufnr)
   return (true_3f(get_option_2a("parinfer_enabled")) and not state[bufnr].locked and not vim.o.paste and not vim.bo.readonly and vim.bo.modifiable and (vim.b[bufnr].changedtick ~= state[bufnr].changedtick) and is_undo_leaf_3f())
 end
 local elapsed_times
-local function _29_(t, k)
+local function _32_(t, k)
   t[k] = {}
   return rawget(t, k)
 end
-elapsed_times = setmetatable({}, {__index = _29_})
+elapsed_times = setmetatable({}, {__index = _32_})
 local function process_buffer(bufnr)
   if should_run_3f(bufnr) then
     local start = vim.loop.hrtime()
     local winnr = api.nvim_get_current_win()
-    local _let_30_ = api.nvim_win_get_cursor(winnr)
-    local lnum = _let_30_[1]
-    local col = _let_30_[2]
+    local _let_33_ = api.nvim_win_get_cursor(winnr)
+    local lnum = _let_33_[1]
+    local col = _let_33_[2]
     local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     local text = table.concat(contents, "\n")
     local response = invoke_parinfer(bufnr, text, lnum, col)
-    local _let_31_ = response
-    local new_lnum = _let_31_["cursorLine"]
-    local new_col = _let_31_["cursorX"]
+    local _let_34_ = response
+    local new_lnum = _let_34_["cursorLine"]
+    local new_col = _let_34_["cursorX"]
     state[bufnr]["changedtick"] = vim.b[bufnr].changedtick
     state[bufnr]["tabstops"] = response.tabStops
     state[bufnr]["prev-cursor"] = {new_lnum, new_col}
     if (response.text ~= text) then
       log("change-response", response)
-      local lines = vim.split(response.text, "\n")
-      local function _32_()
-        update_buffer(bufnr, lines)
+      local function _35_()
+        update_buffer(bufnr, text, response.text)
         return api.nvim_win_set_cursor(winnr, {new_lnum, (new_col - 1)})
       end
-      vim.schedule(_32_)
+      vim.schedule(_35_)
     else
     end
     highlight_error(bufnr, response.error)
@@ -236,36 +260,36 @@ local function slice(lines, start_row, start_col, row_offset, col_offset)
   local start_row0 = (start_row + 1)
   local start_col0 = (start_col + 1)
   local first_line
-  local function _36_()
+  local function _39_()
     if (0 == row_offset) then
       return ((start_col0 + col_offset) - 1)
     else
       return -1
     end
   end
-  first_line = string.sub(lines[start_row0], start_col0, _36_())
+  first_line = string.sub(lines[start_row0], start_col0, _39_())
   local out = {first_line}
   for i = (start_row0 + 1), ((start_row0 + row_offset) - 1) do
     local line = lines[i]
     table.insert(out, line)
   end
   if (0 ~= row_offset) then
-    local function _37_()
+    local function _40_()
       if ((0 < col_offset) and lines[(start_row0 + row_offset)]) then
         return string.sub(lines[(start_row0 + row_offset)], 1, col_offset)
       else
         return ""
       end
     end
-    table.insert(out, _37_())
+    table.insert(out, _40_())
   else
   end
   return out
 end
 local function on_bytes(_, bufnr, _0, start_row, start_col, _1, old_end_row, old_end_col, _2, new_end_row, new_end_col)
   if (true_3f(get_option_2a("parinfer_enabled")) and not state[bufnr].locked) then
-    local _let_39_ = state[bufnr]
-    local prev_contents = _let_39_["prev-contents"]
+    local _let_42_ = state[bufnr]
+    local prev_contents = _let_42_["prev-contents"]
     local contents = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     if (start_row < #prev_contents) then
       local old_text = slice(prev_contents, start_row, start_col, old_end_row, old_end_col)
@@ -301,14 +325,14 @@ local function enter_buffer()
   return nil
 end
 local function cursor_moved(bufnr)
-  local function _44_()
-    local _let_45_ = vim.api.nvim_win_get_cursor(0)
-    local lnum = _let_45_[1]
-    local col = _let_45_[2]
+  local function _47_()
+    local _let_48_ = vim.api.nvim_win_get_cursor(0)
+    local lnum = _let_48_[1]
+    local col = _let_48_[2]
     state[bufnr]["prev-cursor"] = {lnum, (col + 1)}
     return nil
   end
-  return vim.schedule(_44_)
+  return vim.schedule(_47_)
 end
 local function text_changed(bufnr)
   return process_buffer(bufnr)
