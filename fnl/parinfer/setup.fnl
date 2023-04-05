@@ -111,8 +111,7 @@
   (api.nvim_command "silent! undojoin")
   (tset state bufnr :locked true)
   (let [new-lines (vim.split new-contents "\n")
-        hunks (vim.diff old-contents new-contents {:result_type :indices
-                                                   :algorithm :minimal})]
+        hunks (vim.diff old-contents new-contents {:result_type :indices})]
     (each [_ [start-a count-a start-b count-b] (ipairs hunks)]
       (let [lines (fcollect [i start-b (+ start-b count-b)]
                     (. new-lines i))]

@@ -165,7 +165,7 @@ local function update_buffer(bufnr, old_contents, new_contents)
   do end (state)[bufnr]["locked"] = true
   do
     local new_lines = vim.split(new_contents, "\n")
-    local hunks = vim.diff(old_contents, new_contents, {result_type = "indices", algorithm = "minimal"})
+    local hunks = vim.diff(old_contents, new_contents, {result_type = "indices"})
     for _, _25_ in ipairs(hunks) do
       local _each_26_ = _25_
       local start_a = _each_26_[1]
