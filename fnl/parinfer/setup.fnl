@@ -248,8 +248,8 @@
                 n
                 (/ min 1000000) (/ max 1000000) (/ avg 1000000) (/ std 1000000))))))
 
-(global parinfer {:enter_buffer enter-buffer
-                  :cursor_moved cursor-moved
-                  :text_changed text-changed
-                  : stats
-                  : tab})
+{:enter_buffer enter-buffer
+ :cursor_moved cursor-moved
+ :text_changed text-changed
+ : stats
+ : tab}
