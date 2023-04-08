@@ -37,7 +37,7 @@ if !exists('g:parinfer_comment_chars')
 endif
 
 if !exists('g:parinfer_filetypes')
-  let g:parinfer_filetypes = ['clojure', 'scheme', 'lisp', 'racket', 'hy', 'fennel', 'janet', 'carp', 'wast', 'yuck']
+  let g:parinfer_filetypes = ['clojure', 'scheme', 'lisp', 'racket', 'hy', 'fennel', 'janet', 'carp', 'wast', 'yuck', 'dune']
 endif
 
 command! -bang ParinferOn call parinfer#enable(<bang>0, 1)
