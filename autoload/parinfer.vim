@@ -33,13 +33,14 @@ function! parinfer#enable(bang, enable) abort
         let b:parinfer_enabled = a:enable
         echomsg 'Parinfer ' .. (a:enable ? 'enabled' : 'disabled') .. ' in the current buffer'
     endif
+    doautocmd <nomodeline> User Parinfer
 endfunction
 
 function! parinfer#toggle(bang) abort
     if a:bang
-        call parinfer#enable(1, !g:parinfer_enabled)
+        call parinfer#enable(1, !get(g:, 'parinfer_enabled', v:true))
     else
-        call parinfer#enable(0, !b:parinfer_enabled)
+        call parinfer#enable(0, !get(b:, 'parinfer_enabled', get(g:, 'parinfer_enabled', v:true)))
     endif
 endfunction
 
@@ -50,7 +51,11 @@ function! parinfer#init() abort
 
     command! -buffer ParinferStats lua parinfer.stats()
 
+    let b:parinfer_enabled = get(g:, 'parinfer_enabled', v:true)
+
     lua parinfer.enter_buffer()
+
+    doautocmd <nomodeline> User Parinfer
 
     augroup parinfer
         autocmd! TextChanged,TextChangedI,TextChangedP <buffer> call v:lua.parinfer.text_changed(+expand("<abuf>"))
