@@ -17,6 +17,9 @@
 
 (local api vim.api)
 
+; vim.diff is moved to vim.text.diff in Nvim 0.12. Support both.
+(local diff (or vim.text.diff vim.diff))
+
 ; Use a table lookup to translate between mode names and functions
 ; This saves us from having to do a string concatenation on every invocation of
 ; parinfer, which can be wasteful
@@ -111,7 +114,7 @@
   (api.nvim_command "silent! undojoin")
   (tset state bufnr :locked true)
   (let [new-lines (vim.split new-contents "\n")
-        hunks (vim.diff old-contents new-contents {:result_type :indices})]
+        hunks (diff old-contents new-contents {:result_type :indices})]
     (each [_ [start-a count-a start-b count-b] (ipairs hunks)]
       (let [lines (fcollect [i start-b (+ start-b count-b)]
                     (. new-lines i))]
